@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
+    "start:http": "node src/server-http.js",
     "setup": "npm install && pip install -r tools/requirements.txt",
     "configure": "python tools/server-manager.py",
     "test-connection": "python tools/test-connection.py",
@@ -74,6 +75,7 @@
     "dotenv": "^16.4.5",
     "ssh2": "^1.17.0",
     "uuid": "^11.1.0",
+    "ws": "^8.18.3",
     "zod": "^3.25.76"
   },
   "devDependencies": {

@@ -1,0 +1,56 @@
+name: mcp_file_manager
+description: A FileZilla-like file manager using MCP SSH Manager
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State management
+  provider: ^6.1.1
+
+  # WebSocket for MCP communication
+  web_socket_channel: ^2.4.0
+
+  # JSON handling
+  json_annotation: ^4.8.1
+
+  # File operations
+  path: ^1.8.3
+  path_provider: ^2.1.1
+  file_picker: ^6.1.1
+
+  # UI components
+  split_view: ^3.2.1
+  data_table_2: ^2.5.8
+  context_menus: ^1.0.2
+
+  # Icons
+  material_design_icons_flutter: ^7.0.7296
+
+  # Utilities
+  intl: ^0.18.1
+  collection: ^1.18.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+  json_serializable: ^6.7.1
+  build_runner: ^2.4.7
+
+flutter:
+  uses-material-design: true
+
+  fonts:
+    - family: JetBrainsMono
+      fonts:
+        - asset: fonts/JetBrainsMono-Regular.ttf
+        - asset: fonts/JetBrainsMono-Bold.ttf
+          weight: 700
