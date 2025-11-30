@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
 
 class NewFolderDialog extends StatefulWidget {
   final Future<bool> Function(String name) onSubmit;
@@ -59,7 +60,7 @@ class _NewFolderDialogState extends State<NewFolderDialog> {
     return AlertDialog(
       title: const Row(
         children: [
-          Icon(Icons.create_new_folder),
+          HugeIcon(icon: HugeIcons.strokeRoundedFolderAdd),
           SizedBox(width: 8),
           Text('New Folder'),
         ],
@@ -98,8 +99,8 @@ class _NewFolderDialogState extends State<NewFolderDialog> {
                 ),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.error_outline,
+                    HugeIcon(
+                      icon: HugeIcons.strokeRoundedAlertCircle,
                       size: 16,
                       color: Theme.of(context).colorScheme.error,
                     ),

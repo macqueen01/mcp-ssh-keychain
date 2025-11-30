@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:hugeicons/hugeicons.dart';
 
 import '../providers/transfer_provider.dart';
 
@@ -43,16 +44,16 @@ class _TransferPanelState extends State<TransferPanel> {
               ),
               child: Row(
                 children: [
-                  Icon(
-                    _isExpanded
-                        ? Icons.keyboard_arrow_down
-                        : Icons.keyboard_arrow_up,
+                  HugeIcon(
+                    icon: _isExpanded
+                        ? HugeIcons.strokeRoundedArrowDown01
+                        : HugeIcons.strokeRoundedArrowUp01,
                     size: 20,
                     color: colorScheme.onSurfaceVariant,
                   ),
                   const SizedBox(width: 8),
-                  Icon(
-                    Icons.swap_vert,
+                  HugeIcon(
+                    icon: HugeIcons.strokeRoundedArrowDataTransferVertical,
                     size: 18,
                     color: colorScheme.primary,
                   ),
@@ -89,7 +90,7 @@ class _TransferPanelState extends State<TransferPanel> {
                   if (provider.transfers.isNotEmpty)
                     TextButton.icon(
                       onPressed: provider.clearCompleted,
-                      icon: const Icon(Icons.clear_all, size: 18),
+                      icon: const HugeIcon(icon: HugeIcons.strokeRoundedClean, size: 18, color: Colors.grey),
                       label: const Text('Clear'),
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -175,10 +176,10 @@ class _TransferItem extends StatelessWidget {
               color: _getStatusColor(colorScheme).withOpacity(0.1),
               borderRadius: BorderRadius.circular(4),
             ),
-            child: Icon(
-              transfer.type == TransferType.upload
-                  ? Icons.upload
-                  : Icons.download,
+            child: HugeIcon(
+              icon: transfer.type == TransferType.upload
+                  ? HugeIcons.strokeRoundedUpload01
+                  : HugeIcons.strokeRoundedDownload01,
               size: 18,
               color: _getStatusColor(colorScheme),
             ),
@@ -239,21 +240,21 @@ class _TransferItem extends StatelessWidget {
             )
           else if (transfer.status == TransferStatus.pending)
             IconButton(
-              icon: const Icon(Icons.close, size: 18),
+              icon: const HugeIcon(icon: HugeIcons.strokeRoundedCancel01, size: 18, color: Colors.grey),
               onPressed: onCancel,
               tooltip: 'Cancel',
               visualDensity: VisualDensity.compact,
             )
           else if (transfer.status == TransferStatus.failed)
             IconButton(
-              icon: const Icon(Icons.refresh, size: 18),
+              icon: const HugeIcon(icon: HugeIcons.strokeRoundedRefresh, size: 18, color: Colors.grey),
               onPressed: onRetry,
               tooltip: 'Retry',
               visualDensity: VisualDensity.compact,
             )
           else if (transfer.status == TransferStatus.completed)
-            Icon(
-              Icons.check_circle,
+            const HugeIcon(
+              icon: HugeIcons.strokeRoundedCheckmarkCircle02,
               size: 20,
               color: Colors.green,
             ),

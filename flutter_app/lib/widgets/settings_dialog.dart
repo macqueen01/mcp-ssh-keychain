@@ -1,6 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:hugeicons/hugeicons.dart';
 
 import '../models/app_settings.dart';
 import '../providers/settings_provider.dart';
@@ -48,7 +49,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
         return AlertDialog(
           title: Row(
             children: [
-              Icon(Icons.settings, color: colorScheme.primary),
+              HugeIcon(icon: HugeIcons.strokeRoundedSettings02, size: 24, color: colorScheme.primary),
               const SizedBox(width: 8),
               const Text('Settings'),
             ],
@@ -185,7 +186,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
       value: 'custom',
       child: Row(
         children: [
-          Icon(Icons.app_shortcut, size: 20, color: colorScheme.onSurface),
+          HugeIcon(icon: HugeIcons.strokeRoundedAppStore, size: 20, color: colorScheme.onSurface),
           const SizedBox(width: 8),
           const Text('Custom...'),
         ],
@@ -240,7 +241,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.edit, size: 20),
+                  icon: HugeIcon(icon: HugeIcons.strokeRoundedPencilEdit01, size: 20, color: Theme.of(context).colorScheme.onSurface),
                   onPressed: _pickCustomEditor,
                   tooltip: 'Change',
                 ),
@@ -253,40 +254,40 @@ class _SettingsDialogState extends State<SettingsDialog> {
   }
 
   Widget _getEditorIcon(String editorId) {
-    IconData icon;
+    List<List<dynamic>> icon;
     Color? color;
 
     switch (editorId) {
       case 'vscode':
-        icon = Icons.code;
+        icon = HugeIcons.strokeRoundedSourceCode;
         color = Colors.blue;
         break;
       case 'cursor':
-        icon = Icons.terminal;
+        icon = HugeIcons.strokeRoundedCommandLine;
         color = Colors.purple;
         break;
       case 'sublime':
-        icon = Icons.edit_note;
+        icon = HugeIcons.strokeRoundedPencilEdit01;
         color = Colors.orange;
         break;
       case 'atom':
-        icon = Icons.circle;
+        icon = HugeIcons.strokeRoundedAtom01;
         color = Colors.green;
         break;
       case 'zed':
-        icon = Icons.bolt;
+        icon = HugeIcons.strokeRoundedFlashOff;
         color = Colors.amber;
         break;
       case 'nova':
-        icon = Icons.star;
+        icon = HugeIcons.strokeRoundedStar;
         color = Colors.cyan;
         break;
       default:
-        icon = Icons.insert_drive_file;
+        icon = HugeIcons.strokeRoundedFile01;
         color = null;
     }
 
-    return Icon(icon, size: 20, color: color);
+    return HugeIcon(icon: icon, size: 20, color: color ?? Theme.of(context).colorScheme.onSurface);
   }
 
   Future<void> _pickCustomEditor() async {

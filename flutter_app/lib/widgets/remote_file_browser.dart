@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
+import 'package:hugeicons/hugeicons.dart';
 
 import '../mcp/mcp_client.dart';
 import 'server_selector.dart';
@@ -218,7 +219,7 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
       ),
       child: Row(
         children: [
-          Icon(CupertinoIcons.checkmark_circle_fill, size: 16, color: Colors.green),
+          HugeIcon(icon: HugeIcons.strokeRoundedCheckmarkCircle02, size: 16, color: Colors.green),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -239,7 +240,7 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(CupertinoIcons.xmark_circle, size: 14, color: colorScheme.error),
+                HugeIcon(icon: HugeIcons.strokeRoundedCancelCircle, size: 14, color: colorScheme.error),
                 const SizedBox(width: 4),
                 Text(
                   'Disconnect',
@@ -270,21 +271,21 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
         children: [
           // Navigation buttons
           IconButton(
-            icon: const Icon(Icons.arrow_upward, size: 16),
+            icon: HugeIcon(icon: HugeIcons.strokeRoundedArrowUp01, size: 16, color: colorScheme.onSurface),
             onPressed: _navigateUp,
             tooltip: 'Go up',
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
           ),
           IconButton(
-            icon: const Icon(Icons.home, size: 16),
+            icon: HugeIcon(icon: HugeIcons.strokeRoundedHome01, size: 16, color: colorScheme.onSurface),
             onPressed: () => _navigateTo('~'),
             tooltip: 'Home',
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
           ),
           IconButton(
-            icon: const Icon(Icons.refresh, size: 16),
+            icon: HugeIcon(icon: HugeIcons.strokeRoundedRefresh, size: 16, color: colorScheme.onSurface),
             onPressed: _loadFiles,
             tooltip: 'Refresh',
             padding: EdgeInsets.zero,
@@ -293,7 +294,7 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
           // Default directory button if available
           if (_selectedServer?.defaultDir != null)
             IconButton(
-              icon: const Icon(Icons.folder_special, size: 16),
+              icon: HugeIcon(icon: HugeIcons.strokeRoundedFolderLibrary, size: 16, color: colorScheme.onSurface),
               onPressed: () => _navigateTo(_selectedServer!.defaultDir!),
               tooltip: 'Default directory',
               padding: EdgeInsets.zero,
@@ -312,8 +313,8 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
                     onTap: () => _navigateTo(isHome ? '/' : '~'),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Icon(
-                        isHome ? Icons.home : Icons.storage,
+                      child: HugeIcon(
+                        icon: isHome ? HugeIcons.strokeRoundedHome01 : HugeIcons.strokeRoundedHardDrive,
                         size: 14,
                         color: colorScheme.primary,
                       ),
@@ -322,7 +323,7 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
                   // Path parts
                   if (!isHome)
                     for (var i = 0; i < pathParts.length; i++) ...[
-                      Icon(Icons.chevron_right, size: 14, color: colorScheme.onSurfaceVariant),
+                      HugeIcon(icon: HugeIcons.strokeRoundedArrowRight01, size: 14, color: colorScheme.onSurfaceVariant),
                       InkWell(
                         onTap: () {
                           final newPath = '/${pathParts.sublist(0, i + 1).join('/')}';
@@ -349,8 +350,8 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
 
           // Show hidden toggle
           IconButton(
-            icon: Icon(
-              _showHidden ? Icons.visibility : Icons.visibility_off,
+            icon: HugeIcon(
+              icon: _showHidden ? HugeIcons.strokeRoundedViewOffSlash : HugeIcons.strokeRoundedView,
               size: 16,
               color: _showHidden ? colorScheme.primary : colorScheme.onSurfaceVariant,
             ),
@@ -408,7 +409,7 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.folder_open, size: 48, color: colorScheme.onSurfaceVariant.withOpacity(0.5)),
+              HugeIcon(icon: HugeIcons.strokeRoundedFolderOpen, size: 48, color: colorScheme.onSurfaceVariant.withOpacity(0.5)),
               const SizedBox(height: 8),
               Text('Empty folder', style: TextStyle(color: colorScheme.onSurfaceVariant)),
               const SizedBox(height: 16),
@@ -459,8 +460,8 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
               // Icon
               SizedBox(
                 width: 24,
-                child: Icon(
-                  _getFileIcon(file),
+                child: HugeIcon(
+                  icon: _getFileIcon(file),
                   size: 16,
                   color: _getFileIconColor(file, colorScheme),
                 ),
@@ -523,7 +524,7 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
             value: FileAction.download,
             child: Row(
               children: [
-                Icon(Icons.download, size: 18, color: colorScheme.onSurface),
+                HugeIcon(icon: HugeIcons.strokeRoundedDownload01, size: 18, color: colorScheme.onSurface),
                 const SizedBox(width: 12),
                 Text('Download "${file.name}"'),
               ],
@@ -533,7 +534,7 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
             value: FileAction.open,
             child: Row(
               children: [
-                Icon(Icons.open_in_new, size: 18, color: colorScheme.onSurface),
+                HugeIcon(icon: HugeIcons.strokeRoundedLinkSquare02, size: 18, color: colorScheme.onSurface),
                 const SizedBox(width: 12),
                 const Text('Open'),
               ],
@@ -545,7 +546,7 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
           value: FileAction.info,
           child: Row(
             children: [
-              Icon(Icons.info_outline, size: 18, color: colorScheme.onSurface),
+              HugeIcon(icon: HugeIcons.strokeRoundedInformationCircle, size: 18, color: colorScheme.onSurface),
               const SizedBox(width: 12),
               const Text('Info'),
             ],
@@ -556,7 +557,7 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
           value: FileAction.rename,
           child: Row(
             children: [
-              Icon(Icons.edit, size: 18, color: colorScheme.onSurface),
+              HugeIcon(icon: HugeIcons.strokeRoundedPencilEdit01, size: 18, color: colorScheme.onSurface),
               const SizedBox(width: 12),
               const Text('Rename'),
             ],
@@ -566,7 +567,7 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
           value: FileAction.duplicate,
           child: Row(
             children: [
-              Icon(Icons.copy, size: 18, color: colorScheme.onSurface),
+              HugeIcon(icon: HugeIcons.strokeRoundedCopy01, size: 18, color: colorScheme.onSurface),
               const SizedBox(width: 12),
               const Text('Duplicate'),
             ],
@@ -576,7 +577,7 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
           value: FileAction.move,
           child: Row(
             children: [
-              Icon(Icons.drive_file_move, size: 18, color: colorScheme.onSurface),
+              HugeIcon(icon: HugeIcons.strokeRoundedFolderTransfer, size: 18, color: colorScheme.onSurface),
               const SizedBox(width: 12),
               const Text('Move...'),
             ],
@@ -587,7 +588,7 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
           value: FileAction.delete,
           child: Row(
             children: [
-              Icon(Icons.delete, size: 18, color: colorScheme.error),
+              HugeIcon(icon: HugeIcons.strokeRoundedDelete02, size: 18, color: colorScheme.error),
               const SizedBox(width: 12),
               Text('Delete', style: TextStyle(color: colorScheme.error)),
             ],
@@ -613,7 +614,7 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
           value: FileAction.newFolder,
           child: Row(
             children: [
-              Icon(Icons.create_new_folder, size: 18, color: colorScheme.onSurface),
+              HugeIcon(icon: HugeIcons.strokeRoundedFolderAdd, size: 18, color: colorScheme.onSurface),
               const SizedBox(width: 12),
               const Text('New folder'),
             ],
@@ -623,7 +624,7 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
           value: FileAction.newFile,
           child: Row(
             children: [
-              Icon(Icons.note_add, size: 18, color: colorScheme.onSurface),
+              HugeIcon(icon: HugeIcons.strokeRoundedFileAdd, size: 18, color: colorScheme.onSurface),
               const SizedBox(width: 12),
               const Text('New file'),
             ],
@@ -634,7 +635,7 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
           value: FileAction.refresh,
           child: Row(
             children: [
-              Icon(Icons.refresh, size: 18, color: colorScheme.onSurface),
+              HugeIcon(icon: HugeIcons.strokeRoundedRefresh, size: 18, color: colorScheme.onSurface),
               const SizedBox(width: 12),
               const Text('Refresh'),
             ],
@@ -723,7 +724,7 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
         builder: (context) => AlertDialog(
           title: Row(
             children: [
-              Icon(_getFileIcon(file), color: _getFileIconColor(file, Theme.of(context).colorScheme)),
+              HugeIcon(icon: _getFileIcon(file), size: 24, color: _getFileIconColor(file, Theme.of(context).colorScheme)),
               const SizedBox(width: 12),
               Expanded(child: Text(file.name, overflow: TextOverflow.ellipsis)),
             ],
@@ -1101,41 +1102,41 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
     }
   }
 
-  IconData _getFileIcon(RemoteFile file) {
-    if (file.isDirectory) return Icons.folder;
-    if (file.isLink) return Icons.link;
+  List<List<dynamic>> _getFileIcon(RemoteFile file) {
+    if (file.isDirectory) return HugeIcons.strokeRoundedFolder01;
+    if (file.isLink) return HugeIcons.strokeRoundedLink01;
 
     final ext = file.name.split('.').last.toLowerCase();
     switch (ext) {
       case 'pdf':
-        return Icons.picture_as_pdf;
+        return HugeIcons.strokeRoundedPdf01;
       case 'doc':
       case 'docx':
-        return Icons.description;
+        return HugeIcons.strokeRoundedDoc01;
       case 'xls':
       case 'xlsx':
-        return Icons.table_chart;
+        return HugeIcons.strokeRoundedXls01;
       case 'jpg':
       case 'jpeg':
       case 'png':
       case 'gif':
       case 'svg':
       case 'webp':
-        return Icons.image;
+        return HugeIcons.strokeRoundedImage01;
       case 'mp3':
       case 'wav':
       case 'flac':
-        return Icons.audio_file;
+        return HugeIcons.strokeRoundedMusicNote01;
       case 'mp4':
       case 'mkv':
       case 'avi':
       case 'mov':
-        return Icons.video_file;
+        return HugeIcons.strokeRoundedVideo01;
       case 'zip':
       case 'tar':
       case 'gz':
       case 'rar':
-        return Icons.folder_zip;
+        return HugeIcons.strokeRoundedFolderZip;
       case 'js':
       case 'ts':
       case 'py':
@@ -1145,22 +1146,22 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
       case 'cpp':
       case 'rs':
       case 'go':
-        return Icons.code;
+        return HugeIcons.strokeRoundedSourceCode;
       case 'json':
       case 'xml':
       case 'yaml':
       case 'yml':
       case 'toml':
-        return Icons.data_object;
+        return HugeIcons.strokeRoundedFileScript;
       case 'css':
-        return Icons.css;
+        return HugeIcons.strokeRoundedCss3;
       case 'html':
-        return Icons.html;
+        return HugeIcons.strokeRoundedHtml5;
       case 'md':
       case 'txt':
-        return Icons.article;
+        return HugeIcons.strokeRoundedTxt01;
       default:
-        return Icons.insert_drive_file;
+        return HugeIcons.strokeRoundedFile01;
     }
   }
 
@@ -1215,7 +1216,7 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error_outline, size: 48, color: colorScheme.error),
+          HugeIcon(icon: HugeIcons.strokeRoundedAlertCircle, size: 48, color: colorScheme.error),
           const SizedBox(height: 8),
           Text(
             'Cannot access folder',

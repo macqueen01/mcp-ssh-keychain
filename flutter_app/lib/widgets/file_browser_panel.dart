@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:provider/provider.dart';
 
 import '../mcp/mcp_client.dart';
@@ -76,7 +77,7 @@ class _FileBrowserPanelState extends State<FileBrowserPanel> {
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.cloud_done, color: Colors.white, size: 18),
+                const HugeIcon(icon: HugeIcons.strokeRoundedCloudDone, color: Colors.white, size: 18),
                 const SizedBox(width: 12),
                 Text('$fileName synced to server'),
               ],
@@ -92,7 +93,7 @@ class _FileBrowserPanelState extends State<FileBrowserPanel> {
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.error, color: Colors.white, size: 18),
+                const HugeIcon(icon: HugeIcons.strokeRoundedAlertCircle, color: Colors.white, size: 18),
                 const SizedBox(width: 12),
                 Expanded(child: Text('Sync failed: ${error ?? "Unknown error"}')),
               ],
@@ -192,19 +193,19 @@ class _FileBrowserPanelState extends State<FileBrowserPanel> {
         children: [
           // Navigation buttons
           IconButton(
-            icon: const Icon(Icons.arrow_back, size: 20),
+            icon: const HugeIcon(icon: HugeIcons.strokeRoundedArrowLeft01, size: 20),
             onPressed: provider.canGoBack ? provider.goBack : null,
             tooltip: 'Back',
             visualDensity: VisualDensity.compact,
           ),
           IconButton(
-            icon: const Icon(Icons.arrow_forward, size: 20),
+            icon: const HugeIcon(icon: HugeIcons.strokeRoundedArrowRight01, size: 20),
             onPressed: provider.canGoForward ? provider.goForward : null,
             tooltip: 'Forward',
             visualDensity: VisualDensity.compact,
           ),
           IconButton(
-            icon: const Icon(Icons.arrow_upward, size: 20),
+            icon: const HugeIcon(icon: HugeIcons.strokeRoundedArrowUp01, size: 20),
             onPressed: provider.goUp,
             tooltip: 'Go Up',
             visualDensity: VisualDensity.compact,
@@ -223,8 +224,8 @@ class _FileBrowserPanelState extends State<FileBrowserPanel> {
                 controller: _pathController,
                 style: const TextStyle(fontSize: 13),
                 decoration: InputDecoration(
-                  prefixIcon: Icon(
-                    Icons.folder,
+                  prefixIcon: HugeIcon(
+                    icon: HugeIcons.strokeRoundedFolder01,
                     size: 18,
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -244,7 +245,7 @@ class _FileBrowserPanelState extends State<FileBrowserPanel> {
 
           // Refresh button
           IconButton(
-            icon: const Icon(Icons.refresh, size: 20),
+            icon: const HugeIcon(icon: HugeIcons.strokeRoundedRefresh, size: 20),
             onPressed: provider.refresh,
             tooltip: 'Refresh',
             visualDensity: VisualDensity.compact,
@@ -271,7 +272,7 @@ class _FileBrowserPanelState extends State<FileBrowserPanel> {
         children: [
           // New folder
           _ToolbarButton(
-            icon: Icons.create_new_folder_outlined,
+            icon: HugeIcons.strokeRoundedFolderAdd,
             label: 'New Folder',
             onPressed: () => _showNewFolderDialog(context, provider),
           ),
@@ -279,7 +280,7 @@ class _FileBrowserPanelState extends State<FileBrowserPanel> {
 
           // Delete
           _ToolbarButton(
-            icon: Icons.delete_outline,
+            icon: HugeIcons.strokeRoundedDelete02,
             label: 'Delete',
             onPressed: hasSelection
                 ? () => _confirmDelete(context, provider)
@@ -289,7 +290,7 @@ class _FileBrowserPanelState extends State<FileBrowserPanel> {
 
           // Rename
           _ToolbarButton(
-            icon: Icons.drive_file_rename_outline,
+            icon: HugeIcons.strokeRoundedPencilEdit02,
             label: 'Rename',
             onPressed: provider.selectedFiles.length == 1
                 ? () => _showRenameDialog(context, provider)
@@ -301,8 +302,8 @@ class _FileBrowserPanelState extends State<FileBrowserPanel> {
           // Hidden files toggle
           _ToolbarButton(
             icon: provider.showHidden
-                ? Icons.visibility
-                : Icons.visibility_off_outlined,
+                ? HugeIcons.strokeRoundedView
+                : HugeIcons.strokeRoundedViewOffSlash,
             label: provider.showHidden ? 'Hide Hidden' : 'Show Hidden',
             onPressed: provider.toggleHidden,
           ),
@@ -318,8 +319,8 @@ class _FileBrowserPanelState extends State<FileBrowserPanel> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.error_outline,
+          HugeIcon(
+            icon: HugeIcons.strokeRoundedAlertCircle,
             size: 48,
             color: colorScheme.error,
           ),
@@ -343,7 +344,7 @@ class _FileBrowserPanelState extends State<FileBrowserPanel> {
           const SizedBox(height: 16),
           FilledButton.icon(
             onPressed: provider.refresh,
-            icon: const Icon(Icons.refresh),
+            icon: const HugeIcon(icon: HugeIcons.strokeRoundedRefresh),
             label: const Text('Retry'),
           ),
         ],
@@ -367,8 +368,8 @@ class _FileBrowserPanelState extends State<FileBrowserPanel> {
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.computer,
+          HugeIcon(
+            icon: HugeIcons.strokeRoundedComputer,
             size: 14,
             color: colorScheme.primary,
           ),
@@ -428,7 +429,7 @@ class _FileBrowserPanelState extends State<FileBrowserPanel> {
           PopupMenuItem<void>(
             child: const Row(
               children: [
-                Icon(Icons.folder_open, size: 20),
+                HugeIcon(icon: HugeIcons.strokeRoundedFolderOpen, size: 20),
                 SizedBox(width: 12),
                 Text('Open'),
               ],
@@ -438,7 +439,7 @@ class _FileBrowserPanelState extends State<FileBrowserPanel> {
         PopupMenuItem<void>(
           child: const Row(
             children: [
-              Icon(Icons.drive_file_rename_outline, size: 20),
+              HugeIcon(icon: HugeIcons.strokeRoundedPencilEdit02, size: 20),
               SizedBox(width: 12),
               Text('Rename'),
             ],
@@ -457,7 +458,7 @@ class _FileBrowserPanelState extends State<FileBrowserPanel> {
         PopupMenuItem<void>(
           child: Row(
             children: [
-              Icon(Icons.delete_outline, size: 20, color: colorScheme.error),
+              HugeIcon(icon: HugeIcons.strokeRoundedDelete02, size: 20, color: colorScheme.error),
               const SizedBox(width: 12),
               Text('Delete', style: TextStyle(color: colorScheme.error)),
             ],
@@ -476,7 +477,7 @@ class _FileBrowserPanelState extends State<FileBrowserPanel> {
         PopupMenuItem<void>(
           child: const Row(
             children: [
-              Icon(Icons.info_outline, size: 20),
+              HugeIcon(icon: HugeIcons.strokeRoundedInformationCircle, size: 20),
               SizedBox(width: 12),
               Text('Properties'),
             ],
@@ -556,8 +557,8 @@ class _FileBrowserPanelState extends State<FileBrowserPanel> {
       builder: (context) => AlertDialog(
         title: Row(
           children: [
-            Icon(
-              file.isDirectory ? Icons.folder : Icons.insert_drive_file,
+            HugeIcon(
+              icon: file.isDirectory ? HugeIcons.strokeRoundedFolder01 : HugeIcons.strokeRoundedFile01,
               size: 24,
             ),
             const SizedBox(width: 8),
@@ -672,7 +673,7 @@ class _FileBrowserPanelState extends State<FileBrowserPanel> {
             SnackBar(
               content: Row(
                 children: [
-                  const Icon(Icons.sync, color: Colors.white, size: 18),
+                  const HugeIcon(icon: HugeIcons.strokeRoundedSync, color: Colors.white, size: 18),
                   const SizedBox(width: 8),
                   Text('Opened ${file.name} - changes will sync automatically'),
                 ],
@@ -724,7 +725,7 @@ class _ToolbarButton extends StatelessWidget {
 
     return TextButton.icon(
       onPressed: onPressed,
-      icon: Icon(icon, size: 18),
+      icon: HugeIcon(icon: icon, size: 18),
       label: Text(label, style: const TextStyle(fontSize: 12)),
       style: TextButton.styleFrom(
         foregroundColor: onPressed != null

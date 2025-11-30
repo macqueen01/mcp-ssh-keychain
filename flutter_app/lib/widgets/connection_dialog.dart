@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/connection_provider.dart';
@@ -55,7 +56,7 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
     return AlertDialog(
       title: const Row(
         children: [
-          Icon(Icons.link),
+          HugeIcon(icon: HugeIcons.strokeRoundedLink01),
           SizedBox(width: 8),
           Text('Connect to MCP Server'),
         ],
@@ -77,7 +78,7 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
                 labelText: 'Server URL',
                 hintText: 'ws://localhost:3000/mcp',
                 border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.cloud_outlined),
+                prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedCloud),
               ),
               enabled: !_isConnecting,
               onSubmitted: (_) => _connect(),
@@ -100,8 +101,8 @@ class _ConnectionDialogState extends State<ConnectionDialog> {
                 ),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.error_outline,
+                    HugeIcon(
+                      icon: HugeIcons.strokeRoundedAlertCircle,
                       color: Theme.of(context).colorScheme.error,
                       size: 20,
                     ),

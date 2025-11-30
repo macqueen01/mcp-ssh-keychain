@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:hugeicons/hugeicons.dart';
 
 /// Model for SSH server info
 class ServerInfo {
@@ -85,8 +86,8 @@ class _ServerSelectorState extends State<ServerSelector> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              CupertinoIcons.desktopcomputer,
+            HugeIcon(
+              icon: HugeIcons.strokeRoundedComputer,
               size: 64,
               color: colorScheme.outline,
             ),
@@ -148,12 +149,12 @@ class _ServerSelectorState extends State<ServerSelector> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     _buildViewToggleButton(
-                      icon: CupertinoIcons.square_grid_2x2,
+                      icon: HugeIcons.strokeRoundedGridView,
                       isSelected: _isGridView,
                       onTap: () => setState(() => _isGridView = true),
                     ),
                     _buildViewToggleButton(
-                      icon: CupertinoIcons.list_bullet,
+                      icon: HugeIcons.strokeRoundedMenu02,
                       isSelected: !_isGridView,
                       onTap: () => setState(() => _isGridView = false),
                     ),
@@ -182,8 +183,8 @@ class _ServerSelectorState extends State<ServerSelector> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        CupertinoIcons.search,
+                      HugeIcon(
+                        icon: HugeIcons.strokeRoundedSearch01,
                         size: 48,
                         color: colorScheme.outline,
                       ),
@@ -204,7 +205,7 @@ class _ServerSelectorState extends State<ServerSelector> {
   }
 
   Widget _buildViewToggleButton({
-    required IconData icon,
+    required List<List<dynamic>> icon,
     required bool isSelected,
     required VoidCallback onTap,
   }) {
@@ -217,8 +218,8 @@ class _ServerSelectorState extends State<ServerSelector> {
           color: isSelected ? colorScheme.primary : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
         ),
-        child: Icon(
-          icon,
+        child: HugeIcon(
+          icon: icon,
           size: 18,
           color: isSelected ? colorScheme.onPrimary : colorScheme.onSurface,
         ),
@@ -281,8 +282,8 @@ class _ServerSelectorState extends State<ServerSelector> {
                   color: colorScheme.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: Icon(
-                  CupertinoIcons.desktopcomputer,
+                child: HugeIcon(
+                  icon: HugeIcons.strokeRoundedComputer,
                   size: 20,
                   color: colorScheme.primary,
                 ),
@@ -352,8 +353,8 @@ class _ServerSelectorState extends State<ServerSelector> {
                   color: colorScheme.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(
-                  CupertinoIcons.desktopcomputer,
+                child: HugeIcon(
+                  icon: HugeIcons.strokeRoundedComputer,
                   size: 20,
                   color: colorScheme.primary,
                 ),
@@ -384,8 +385,8 @@ class _ServerSelectorState extends State<ServerSelector> {
                 ),
               ),
               // Arrow
-              Icon(
-                CupertinoIcons.chevron_right,
+              HugeIcon(
+                icon: HugeIcons.strokeRoundedArrowRight01,
                 size: 16,
                 color: colorScheme.outline,
               ),

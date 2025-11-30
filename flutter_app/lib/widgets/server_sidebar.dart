@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
 import '../mcp/mcp_client.dart';
 
 class ServerSidebar extends StatelessWidget {
@@ -27,8 +28,8 @@ class ServerSidebar extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                Icon(
-                  Icons.dns,
+                HugeIcon(
+                  icon: HugeIcons.strokeRoundedServer,
                   size: 20,
                   color: colorScheme.primary,
                 ),
@@ -86,8 +87,8 @@ class ServerSidebar extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.dns_outlined,
+            HugeIcon(
+              icon: HugeIcons.strokeRoundedServer,
               size: 48,
               color: colorScheme.onSurfaceVariant.withOpacity(0.5),
             ),
@@ -149,8 +150,8 @@ class _ServerListItem extends StatelessWidget {
                       : colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(
-                  Icons.computer,
+                child: HugeIcon(
+                  icon: HugeIcons.strokeRoundedComputer,
                   size: 20,
                   color: isSelected
                       ? colorScheme.onPrimary
@@ -184,8 +185,8 @@ class _ServerListItem extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(
-                Icons.chevron_right,
+              HugeIcon(
+                icon: HugeIcons.strokeRoundedArrowRight01,
                 size: 20,
                 color: isSelected
                     ? colorScheme.onPrimaryContainer

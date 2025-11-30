@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
 
 class RenameDialog extends StatefulWidget {
   final String currentName;
@@ -83,7 +84,7 @@ class _RenameDialogState extends State<RenameDialog> {
     return AlertDialog(
       title: const Row(
         children: [
-          Icon(Icons.drive_file_rename_outline),
+          HugeIcon(icon: HugeIcons.strokeRoundedPencilEdit02),
           SizedBox(width: 8),
           Text('Rename'),
         ],
@@ -130,8 +131,8 @@ class _RenameDialogState extends State<RenameDialog> {
                 ),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.error_outline,
+                    HugeIcon(
+                      icon: HugeIcons.strokeRoundedAlertCircle,
                       size: 16,
                       color: Theme.of(context).colorScheme.error,
                     ),

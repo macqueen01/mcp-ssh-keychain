@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:hugeicons/hugeicons.dart';
 
 import '../mcp/mcp_client.dart';
 import '../providers/connection_provider.dart';
@@ -215,8 +216,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: colorScheme.primary.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  Icons.folder_shared,
+                child: HugeIcon(
+                  icon: HugeIcons.strokeRoundedFolderShared01,
                   size: 64,
                   color: colorScheme.primary,
                 ),
@@ -258,8 +259,8 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
+            HugeIcon(
+              icon: HugeIcons.strokeRoundedAlertCircle,
               size: 64,
               color: colorScheme.error,
             ),
@@ -288,13 +289,13 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 FilledButton.icon(
                   onPressed: _retry,
-                  icon: const Icon(Icons.refresh),
+                  icon: const HugeIcon(icon: HugeIcons.strokeRoundedRefresh, size: 18, color: Colors.white),
                   label: const Text('Retry'),
                 ),
                 const SizedBox(width: 16),
                 OutlinedButton.icon(
                   onPressed: () => _showConnectionDialog(context),
-                  icon: const Icon(Icons.settings),
+                  icon: HugeIcon(icon: HugeIcons.strokeRoundedSettings02, size: 18, color: Theme.of(context).colorScheme.primary),
                   label: const Text('Manual Connect'),
                 ),
               ],
@@ -313,8 +314,8 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.cloud_off,
+          HugeIcon(
+            icon: HugeIcons.strokeRoundedCloud,
             size: 64,
             color: colorScheme.onSurfaceVariant.withOpacity(0.5),
           ),
@@ -335,7 +336,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 24),
           FilledButton.icon(
             onPressed: _retry,
-            icon: const Icon(Icons.refresh),
+            icon: const HugeIcon(icon: HugeIcons.strokeRoundedRefresh, size: 18, color: Colors.white),
             label: const Text('Reconnect'),
           ),
         ],
@@ -359,7 +360,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         children: [
           // Logo/Title
-          Icon(Icons.folder_shared, size: 20, color: colorScheme.primary),
+          HugeIcon(icon: HugeIcons.strokeRoundedFolderShared01, size: 20, color: colorScheme.primary),
           const SizedBox(width: 8),
           Text(
             'MCP File Manager',
@@ -389,10 +390,10 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  connectionProvider.isConnected
-                      ? Icons.cloud_done
-                      : Icons.cloud_off,
+                HugeIcon(
+                  icon: connectionProvider.isConnected
+                      ? HugeIcons.strokeRoundedCloudSavingDone01
+                      : HugeIcons.strokeRoundedCloud,
                   size: 14,
                   color:
                       connectionProvider.isConnected ? Colors.green : Colors.grey,
@@ -416,11 +417,12 @@ class _HomeScreenState extends State<HomeScreen> {
           // Actions
           if (connectionProvider.isConnected) ...[
             IconButton(
-              icon: Icon(
-                _showTransferPanel
-                    ? Icons.download_done
-                    : Icons.download_outlined,
+              icon: HugeIcon(
+                icon: _showTransferPanel
+                    ? HugeIcons.strokeRoundedDownload02
+                    : HugeIcons.strokeRoundedDownload01,
                 size: 18,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
               tooltip: 'Toggle Transfer Panel',
               onPressed: () {
@@ -432,7 +434,7 @@ class _HomeScreenState extends State<HomeScreen> {
               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
             ),
             IconButton(
-              icon: const Icon(Icons.refresh, size: 18),
+              icon: HugeIcon(icon: HugeIcons.strokeRoundedRefresh, size: 18, color: Theme.of(context).colorScheme.onSurface),
               tooltip: 'Refresh Servers',
               onPressed: () => connectionProvider.refreshServers(),
               padding: EdgeInsets.zero,
@@ -442,7 +444,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
           // Settings button (editor settings)
           IconButton(
-            icon: const Icon(Icons.edit_outlined, size: 18),
+            icon: HugeIcon(icon: HugeIcons.strokeRoundedPencilEdit02, size: 18, color: Theme.of(context).colorScheme.onSurface),
             tooltip: 'Editor Settings',
             onPressed: () => _showSettingsDialog(context),
             padding: EdgeInsets.zero,
@@ -451,7 +453,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
           // Advanced settings button (servers, tools, Claude Code)
           IconButton(
-            icon: const Icon(Icons.tune, size: 18),
+            icon: HugeIcon(icon: HugeIcons.strokeRoundedSettings01, size: 18, color: Theme.of(context).colorScheme.onSurface),
             tooltip: 'Advanced Settings',
             onPressed: () => _showAdvancedSettingsDialog(context),
             padding: EdgeInsets.zero,
@@ -459,9 +461,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
 
           IconButton(
-            icon: Icon(
-              connectionProvider.isConnected ? Icons.link_off : Icons.link,
+            icon: HugeIcon(
+              icon: connectionProvider.isConnected ? HugeIcons.strokeRoundedUnlink01 : HugeIcons.strokeRoundedLink01,
               size: 18,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
             tooltip:
                 connectionProvider.isConnected ? 'Disconnect' : 'Connect',
@@ -508,7 +511,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.computer, size: 14, color: colorScheme.primary),
+                      HugeIcon(icon: HugeIcons.strokeRoundedComputer, size: 14, color: colorScheme.primary),
                       const SizedBox(width: 6),
                       Text(
                         'Local',
@@ -548,7 +551,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.cloud, size: 14, color: colorScheme.primary),
+                    HugeIcon(icon: HugeIcons.strokeRoundedCloud, size: 14, color: colorScheme.primary),
                     const SizedBox(width: 6),
                     Text(
                       'Remote',

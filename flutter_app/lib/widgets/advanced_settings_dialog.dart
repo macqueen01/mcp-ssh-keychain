@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hugeicons/hugeicons.dart';
 
 import '../services/config_service.dart';
 
@@ -120,7 +121,7 @@ class _AdvancedSettingsDialogState extends State<AdvancedSettingsDialog>
               ),
               child: Row(
                 children: [
-                  Icon(Icons.tune, color: colorScheme.primary),
+                  HugeIcon(icon: HugeIcons.strokeRoundedSettings01, color: colorScheme.primary),
                   const SizedBox(width: 12),
                   Text(
                     'Advanced Settings',
@@ -128,7 +129,7 @@ class _AdvancedSettingsDialogState extends State<AdvancedSettingsDialog>
                   ),
                   const Spacer(),
                   IconButton(
-                    icon: const Icon(Icons.close),
+                    icon: const HugeIcon(icon: HugeIcons.strokeRoundedCancel01),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
@@ -139,9 +140,9 @@ class _AdvancedSettingsDialogState extends State<AdvancedSettingsDialog>
             TabBar(
               controller: _tabController,
               tabs: const [
-                Tab(icon: Icon(Icons.dns), text: 'SSH Servers'),
-                Tab(icon: Icon(Icons.build), text: 'MCP Tools'),
-                Tab(icon: Icon(Icons.integration_instructions), text: 'Claude Code'),
+                Tab(icon: HugeIcon(icon: HugeIcons.strokeRoundedServerStack01), text: 'SSH Servers'),
+                Tab(icon: HugeIcon(icon: HugeIcons.strokeRoundedTools), text: 'MCP Tools'),
+                Tab(icon: HugeIcon(icon: HugeIcons.strokeRoundedPlug01), text: 'Claude Code'),
               ],
             ),
 
@@ -189,7 +190,7 @@ class _AdvancedSettingsDialogState extends State<AdvancedSettingsDialog>
               const Spacer(),
               FilledButton.icon(
                 onPressed: () => _showServerDialog(),
-                icon: const Icon(Icons.add, size: 18),
+                icon: const HugeIcon(icon: HugeIcons.strokeRoundedAdd01, size: 18),
                 label: const Text('Add Server'),
               ),
             ],
@@ -220,8 +221,8 @@ class _AdvancedSettingsDialogState extends State<AdvancedSettingsDialog>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.dns_outlined,
+          HugeIcon(
+            icon: HugeIcons.strokeRoundedServerStack01,
             size: 64,
             color: colorScheme.onSurfaceVariant.withOpacity(0.5),
           ),
@@ -252,7 +253,7 @@ class _AdvancedSettingsDialogState extends State<AdvancedSettingsDialog>
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: colorScheme.primaryContainer,
-          child: Icon(Icons.dns, color: colorScheme.primary, size: 20),
+          child: HugeIcon(icon: HugeIcons.strokeRoundedServerStack01, color: colorScheme.primary, size: 20),
         ),
         title: Text(
           server.name,
@@ -270,12 +271,12 @@ class _AdvancedSettingsDialogState extends State<AdvancedSettingsDialog>
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(Icons.edit, size: 20),
+              icon: const HugeIcon(icon: HugeIcons.strokeRoundedPencilEdit01, size: 20),
               tooltip: 'Edit',
               onPressed: () => _showServerDialog(server: server),
             ),
             IconButton(
-              icon: Icon(Icons.delete, size: 20, color: colorScheme.error),
+              icon: HugeIcon(icon: HugeIcons.strokeRoundedDelete02, size: 20, color: colorScheme.error),
               tooltip: 'Delete',
               onPressed: () => _confirmDeleteServer(server),
             ),
@@ -376,7 +377,7 @@ class _AdvancedSettingsDialogState extends State<AdvancedSettingsDialog>
             ),
             child: Row(
               children: [
-                Icon(Icons.info_outline, color: colorScheme.primary, size: 20),
+                HugeIcon(icon: HugeIcons.strokeRoundedInformationCircle, color: colorScheme.primary, size: 20),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -422,8 +423,8 @@ class _AdvancedSettingsDialogState extends State<AdvancedSettingsDialog>
           backgroundColor: group.enabled
               ? colorScheme.primaryContainer
               : colorScheme.surfaceContainerHighest,
-          child: Icon(
-            _getToolGroupIcon(group.name),
+          child: HugeIcon(
+            icon: _getToolGroupIcon(group.name),
             color: group.enabled ? colorScheme.primary : colorScheme.onSurfaceVariant,
             size: 20,
           ),
@@ -464,22 +465,22 @@ class _AdvancedSettingsDialogState extends State<AdvancedSettingsDialog>
     );
   }
 
-  IconData _getToolGroupIcon(String groupName) {
+  List<List<dynamic>> _getToolGroupIcon(String groupName) {
     switch (groupName) {
       case 'core':
-        return Icons.star;
+        return HugeIcons.strokeRoundedStar;
       case 'sessions':
-        return Icons.terminal;
+        return HugeIcons.strokeRoundedCommandLine;
       case 'monitoring':
-        return Icons.monitor_heart;
+        return HugeIcons.strokeRoundedActivity01;
       case 'backup':
-        return Icons.backup;
+        return HugeIcons.strokeRoundedArchive01;
       case 'database':
-        return Icons.storage;
+        return HugeIcons.strokeRoundedDatabase01;
       case 'advanced':
-        return Icons.rocket_launch;
+        return HugeIcons.strokeRoundedRocket01;
       default:
-        return Icons.extension;
+        return HugeIcons.strokeRoundedPuzzle;
     }
   }
 
@@ -558,7 +559,7 @@ class _AdvancedSettingsDialogState extends State<AdvancedSettingsDialog>
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.copy, size: 18),
+                  icon: const HugeIcon(icon: HugeIcons.strokeRoundedCopy01, size: 18),
                   tooltip: 'Copy path',
                   onPressed: () {
                     Clipboard.setData(ClipboardData(text: status.configPath ?? ''));
@@ -605,7 +606,7 @@ class _AdvancedSettingsDialogState extends State<AdvancedSettingsDialog>
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.copy, size: 18),
+                    icon: const HugeIcon(icon: HugeIcons.strokeRoundedCopy01, size: 18),
                     tooltip: 'Copy command',
                     onPressed: () {
                       Clipboard.setData(ClipboardData(
@@ -626,7 +627,7 @@ class _AdvancedSettingsDialogState extends State<AdvancedSettingsDialog>
           Center(
             child: OutlinedButton.icon(
               onPressed: _loadClaudeCodeStatus,
-              icon: const Icon(Icons.refresh),
+              icon: const HugeIcon(icon: HugeIcons.strokeRoundedRefresh),
               label: const Text('Refresh Status'),
             ),
           ),
@@ -651,8 +652,8 @@ class _AdvancedSettingsDialogState extends State<AdvancedSettingsDialog>
       ),
       child: Row(
         children: [
-          Icon(
-            isOk ? Icons.check_circle : Icons.warning,
+          HugeIcon(
+            icon: isOk ? HugeIcons.strokeRoundedCheckmarkCircle02 : HugeIcons.strokeRoundedAlert02,
             color: isOk ? Colors.green : Colors.orange,
             size: 48,
           ),
@@ -759,7 +760,7 @@ class _ServerEditDialogState extends State<ServerEditDialog> {
                   decoration: const InputDecoration(
                     labelText: 'Server Name',
                     hintText: 'e.g., production, staging',
-                    prefixIcon: Icon(Icons.label),
+                    prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedTag01),
                   ),
                   enabled: !isEditing,
                   validator: (value) {
@@ -780,7 +781,7 @@ class _ServerEditDialogState extends State<ServerEditDialog> {
                   decoration: const InputDecoration(
                     labelText: 'Host',
                     hintText: 'e.g., server.example.com',
-                    prefixIcon: Icon(Icons.dns),
+                    prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedServerStack01),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -800,7 +801,7 @@ class _ServerEditDialogState extends State<ServerEditDialog> {
                         controller: _userController,
                         decoration: const InputDecoration(
                           labelText: 'Username',
-                          prefixIcon: Icon(Icons.person),
+                          prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedUser),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -840,12 +841,12 @@ class _ServerEditDialogState extends State<ServerEditDialog> {
                     ButtonSegment(
                       value: false,
                       label: Text('Password'),
-                      icon: Icon(Icons.password),
+                      icon: HugeIcon(icon: HugeIcons.strokeRoundedKey01),
                     ),
                     ButtonSegment(
                       value: true,
                       label: Text('SSH Key'),
-                      icon: Icon(Icons.key),
+                      icon: HugeIcon(icon: HugeIcons.strokeRoundedKey01),
                     ),
                   ],
                   selected: {_useKeyAuth},
@@ -862,7 +863,7 @@ class _ServerEditDialogState extends State<ServerEditDialog> {
                     decoration: const InputDecoration(
                       labelText: 'SSH Key Path',
                       hintText: '~/.ssh/id_rsa',
-                      prefixIcon: Icon(Icons.key),
+                      prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedKey01),
                     ),
                     validator: (value) {
                       if (_useKeyAuth && (value == null || value.isEmpty)) {
@@ -876,9 +877,9 @@ class _ServerEditDialogState extends State<ServerEditDialog> {
                     controller: _passwordController,
                     decoration: InputDecoration(
                       labelText: 'Password',
-                      prefixIcon: const Icon(Icons.password),
+                      prefixIcon: const HugeIcon(icon: HugeIcons.strokeRoundedKey01),
                       suffixIcon: IconButton(
-                        icon: Icon(_showPassword ? Icons.visibility_off : Icons.visibility),
+                        icon: HugeIcon(icon: _showPassword ? HugeIcons.strokeRoundedViewOffSlash : HugeIcons.strokeRoundedView),
                         onPressed: () => setState(() => _showPassword = !_showPassword),
                       ),
                     ),
@@ -902,7 +903,7 @@ class _ServerEditDialogState extends State<ServerEditDialog> {
                       decoration: const InputDecoration(
                         labelText: 'Default Directory (optional)',
                         hintText: '/var/www/myapp',
-                        prefixIcon: Icon(Icons.folder),
+                        prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedFolder01),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -910,9 +911,9 @@ class _ServerEditDialogState extends State<ServerEditDialog> {
                       controller: _sudoPasswordController,
                       decoration: InputDecoration(
                         labelText: 'Sudo Password (optional)',
-                        prefixIcon: const Icon(Icons.admin_panel_settings),
+                        prefixIcon: const HugeIcon(icon: HugeIcons.strokeRoundedShieldUser),
                         suffixIcon: IconButton(
-                          icon: Icon(_showSudoPassword ? Icons.visibility_off : Icons.visibility),
+                          icon: HugeIcon(icon: _showSudoPassword ? HugeIcons.strokeRoundedViewOffSlash : HugeIcons.strokeRoundedView),
                           onPressed: () => setState(() => _showSudoPassword = !_showSudoPassword),
                         ),
                       ),

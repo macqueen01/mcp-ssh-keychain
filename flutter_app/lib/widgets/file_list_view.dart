@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'package:hugeicons/hugeicons.dart';
 
 import '../mcp/mcp_client.dart';
 import '../providers/file_browser_provider.dart';
@@ -35,8 +36,8 @@ class FileListView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.folder_open,
+            HugeIcon(
+              icon: HugeIcons.strokeRoundedFolderOpen,
               size: 64,
               color: colorScheme.onSurfaceVariant.withOpacity(0.3),
             ),
@@ -188,8 +189,8 @@ class _HeaderCell extends StatelessWidget {
             ),
             if (isActive) ...[
               const SizedBox(width: 4),
-              Icon(
-                sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
+              HugeIcon(
+                icon: sortAscending ? HugeIcons.strokeRoundedArrowUp01 : HugeIcons.strokeRoundedArrowDown01,
                 size: 14,
                 color: colorScheme.primary,
               ),
@@ -311,24 +312,24 @@ class _FileListItem extends StatelessWidget {
 
   Widget _getFileIcon(ColorScheme colorScheme) {
     if (file.isDirectory) {
-      return Icon(
-        Icons.folder,
+      return HugeIcon(
+        icon: HugeIcons.strokeRoundedFolder01,
         size: 20,
         color: Colors.amber.shade700,
       );
     }
 
     if (file.isLink) {
-      return Icon(
-        Icons.link,
+      return HugeIcon(
+        icon: HugeIcons.strokeRoundedLink01,
         size: 20,
         color: colorScheme.primary,
       );
     }
 
     final iconData = _getIconForFileType(file.icon);
-    return Icon(
-      iconData,
+    return HugeIcon(
+      icon: iconData,
       size: 20,
       color: colorScheme.onSurfaceVariant,
     );
@@ -337,27 +338,27 @@ class _FileListItem extends StatelessWidget {
   IconData _getIconForFileType(String type) {
     switch (type) {
       case 'text':
-        return Icons.description;
+        return HugeIcons.strokeRoundedFileScript;
       case 'code':
-        return Icons.code;
+        return HugeIcons.strokeRoundedSourceCode;
       case 'config':
-        return Icons.settings;
+        return HugeIcons.strokeRoundedSettings02;
       case 'image':
-        return Icons.image;
+        return HugeIcons.strokeRoundedImage01;
       case 'audio':
-        return Icons.audio_file;
+        return HugeIcons.strokeRoundedMusicNote01;
       case 'video':
-        return Icons.video_file;
+        return HugeIcons.strokeRoundedVideo01;
       case 'archive':
-        return Icons.archive;
+        return HugeIcons.strokeRoundedFolderZip;
       case 'pdf':
-        return Icons.picture_as_pdf;
+        return HugeIcons.strokeRoundedPdf01;
       case 'word':
-        return Icons.article;
+        return HugeIcons.strokeRoundedTxt01;
       case 'excel':
-        return Icons.table_chart;
+        return HugeIcons.strokeRoundedXls01;
       default:
-        return Icons.insert_drive_file;
+        return HugeIcons.strokeRoundedFile01;
     }
   }
 }

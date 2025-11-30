@@ -44,6 +44,7 @@ dependencies:
 
   # Open files with external apps
   url_launcher: ^6.2.1
+  hugeicons: ^1.1.2
 
 dev_dependencies:
   flutter_test:
