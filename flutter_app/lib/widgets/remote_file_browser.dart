@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 
 import '../mcp/mcp_client.dart';
+import 'server_selector.dart';
 
 /// Remote file browser widget with server selector - Finder-like design
 class RemoteFileBrowser extends StatefulWidget {
@@ -31,25 +33,14 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
   String? _error;
   bool _showHidden = false;
 
-  @override
-  void initState() {
-    super.initState();
-    if (widget.servers.isNotEmpty) {
-      _selectedServer = widget.servers.first;
-      _loadFiles();
-    }
-  }
-
-  @override
-  void didUpdateWidget(RemoteFileBrowser oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // If servers list changed and we don't have a selected server, select first
-    if (_selectedServer == null && widget.servers.isNotEmpty) {
-      setState(() {
-        _selectedServer = widget.servers.first;
-      });
-      _loadFiles();
-    }
+  // Convert SshServer list to ServerInfo list for the selector
+  List<ServerInfo> get _serverInfos {
+    return widget.servers.map((s) => ServerInfo(
+      name: s.name,
+      host: s.host,
+      user: s.user,
+      defaultDir: s.defaultDir,
+    )).toList();
   }
 
   Future<void> _loadFiles() async {
@@ -89,7 +80,7 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
   }
 
   void _navigateUp() {
-    if (_currentPath == '/' || _currentPath == '~') return;
+    if (_currentPath == '/' || _currentPath == '~' || _currentPath == '\$HOME') return;
     final parts = _currentPath.split('/');
     if (parts.length > 1) {
       parts.removeLast();
@@ -100,7 +91,10 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
 
   void _openItem(RemoteFile file) {
     if (file.isDirectory) {
-      _navigateTo('$_currentPath/${file.name}');
+      final newPath = _currentPath.endsWith('/')
+          ? '$_currentPath${file.name}'
+          : '$_currentPath/${file.name}';
+      _navigateTo(newPath);
     } else {
       widget.onFileSelected?.call(file, _selectedServer!);
     }
@@ -123,7 +117,13 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
     widget.onFilesSelected?.call(selectedRemoteFiles, _selectedServer!);
   }
 
-  void _selectServer(SshServer server) {
+  void _selectServer(ServerInfo serverInfo) {
+    // Find the matching SshServer
+    final server = widget.servers.firstWhere(
+      (s) => s.name == serverInfo.name,
+      orElse: () => widget.servers.first,
+    );
+
     setState(() {
       _selectedServer = server;
       _currentPath = server.defaultDir ?? '~';
@@ -133,14 +133,34 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
     _loadFiles();
   }
 
+  void _disconnectServer() {
+    setState(() {
+      _selectedServer = null;
+      _currentPath = '~';
+      _files = [];
+      _selectedFiles.clear();
+      _error = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
+    // Show server selector if no server is selected
+    if (_selectedServer == null) {
+      return ServerSelector(
+        servers: _serverInfos,
+        onServerSelected: _selectServer,
+        isLoading: false,
+      );
+    }
+
+    // Show file browser when server is selected
     return Column(
       children: [
-        // Server selector
-        _buildServerSelector(colorScheme),
+        // Connected server header with disconnect button
+        _buildConnectedServerHeader(colorScheme),
 
         // Header with path breadcrumb
         _buildHeader(colorScheme),
@@ -150,13 +170,11 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
 
         // File list
         Expanded(
-          child: _selectedServer == null
-              ? _buildNoServerView(colorScheme)
-              : _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _error != null
-                      ? _buildErrorView(colorScheme)
-                      : _buildFileList(colorScheme),
+          child: _isLoading
+              ? const Center(child: CupertinoActivityIndicator())
+              : _error != null
+                  ? _buildErrorView(colorScheme)
+                  : _buildFileList(colorScheme),
         ),
 
         // Status bar
@@ -165,10 +183,10 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
     );
   }
 
-  Widget _buildServerSelector(ColorScheme colorScheme) {
+  Widget _buildConnectedServerHeader(ColorScheme colorScheme) {
     return Container(
-      height: 32,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      height: 36,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
         color: colorScheme.primaryContainer.withOpacity(0.3),
         border: Border(
@@ -177,34 +195,34 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
       ),
       child: Row(
         children: [
-          Icon(Icons.dns, size: 16, color: colorScheme.primary),
+          Icon(CupertinoIcons.checkmark_circle_fill, size: 16, color: Colors.green),
           const SizedBox(width: 8),
           Expanded(
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<SshServer>(
-                value: _selectedServer,
-                isDense: true,
-                isExpanded: true,
-                hint: Text(
-                  'Select server',
-                  style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
-                ),
-                items: widget.servers.map((server) {
-                  return DropdownMenuItem(
-                    value: server,
-                    child: Text(
-                      '${server.name} (${server.user}@${server.host})',
-                      style: const TextStyle(fontSize: 12),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  );
-                }).toList(),
-                onChanged: (server) {
-                  if (server != null) {
-                    _selectServer(server);
-                  }
-                },
+            child: Text(
+              '${_selectedServer!.name} (${_selectedServer!.user}@${_selectedServer!.host})',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: colorScheme.onSurface,
               ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          // Disconnect button
+          CupertinoButton(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            minSize: 28,
+            onPressed: _disconnectServer,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(CupertinoIcons.xmark_circle, size: 14, color: colorScheme.error),
+                const SizedBox(width: 4),
+                Text(
+                  'Disconnect',
+                  style: TextStyle(fontSize: 11, color: colorScheme.error),
+                ),
+              ],
             ),
           ),
         ],
@@ -213,8 +231,8 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
   }
 
   Widget _buildHeader(ColorScheme colorScheme) {
-    final pathParts = _currentPath.split('/').where((p) => p.isNotEmpty).toList();
-    final isHome = _currentPath == '~' || _currentPath.isEmpty;
+    final pathParts = _currentPath.split('/').where((p) => p.isNotEmpty && p != '\$HOME').toList();
+    final isHome = _currentPath == '~' || _currentPath == '\$HOME' || _currentPath.isEmpty;
 
     return Container(
       height: 32,
@@ -249,6 +267,15 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
           ),
+          // Default directory button if available
+          if (_selectedServer?.defaultDir != null)
+            IconButton(
+              icon: const Icon(Icons.folder_special, size: 16),
+              onPressed: () => _navigateTo(_selectedServer!.defaultDir!),
+              tooltip: 'Default directory',
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+            ),
           const SizedBox(width: 8),
 
           // Breadcrumb path
@@ -345,19 +372,6 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
             width: 70,
             child: Text('Size', textAlign: TextAlign.right, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: colorScheme.onSurfaceVariant)),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNoServerView(ColorScheme colorScheme) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.dns_outlined, size: 48, color: colorScheme.onSurfaceVariant.withOpacity(0.5)),
-          const SizedBox(height: 8),
-          Text('Select a server', style: TextStyle(color: colorScheme.onSurfaceVariant)),
         ],
       ),
     );
@@ -608,9 +622,7 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
         .fold<int>(0, (sum, f) => sum + f.size);
 
     String statusText;
-    if (_selectedServer == null) {
-      statusText = 'No server selected';
-    } else if (selectedCount > 0) {
+    if (selectedCount > 0) {
       final sizeStr = _formatSize(selectedSize);
       statusText = '$selectedCount selected ($sizeStr)';
     } else {
@@ -633,15 +645,14 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
             style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
           ),
           const Spacer(),
-          if (_selectedServer != null)
-            Text(
-              _selectedServer!.name,
-              style: TextStyle(
-                fontSize: 11,
-                color: colorScheme.primary,
-                fontWeight: FontWeight.w500,
-              ),
+          Text(
+            _selectedServer!.name,
+            style: TextStyle(
+              fontSize: 11,
+              color: colorScheme.primary,
+              fontWeight: FontWeight.w500,
             ),
+          ),
         ],
       ),
     );
