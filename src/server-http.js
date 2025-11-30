@@ -63,7 +63,7 @@ async function getConnection(serverName) {
   }
 
   // Get server config
-  const config = configLoader.getServerConfig(normalizedName);
+  const config = configLoader.getServer(normalizedName);
   if (!config) {
     throw new Error(`Server not found: ${serverName}`);
   }
@@ -247,7 +247,7 @@ class McpSshServer {
   }
 
   async listServers() {
-    const servers = configLoader.listServers();
+    const servers = configLoader.getAllServers();
     return {
       content: [{
         type: 'text',
@@ -472,7 +472,7 @@ async function main() {
   await transport.start();
 
   console.error('');
-  console.error('Available servers:', configLoader.listServers().map(s => s.name).join(', ') || '(none configured)');
+  console.error('Available servers:', configLoader.getAllServers().map(s => s.name).join(', ') || '(none configured)');
   console.error('');
   console.error('Connect your Flutter app to: ws://' + host + ':' + port + '/mcp');
   console.error('');
