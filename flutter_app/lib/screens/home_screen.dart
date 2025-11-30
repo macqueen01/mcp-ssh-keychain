@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/connection_provider.dart';
+import '../providers/settings_provider.dart';
 import '../providers/transfer_provider.dart';
 import '../widgets/connection_dialog.dart';
 import '../widgets/server_sidebar.dart';
 import '../widgets/file_browser_panel.dart';
+import '../widgets/settings_dialog.dart';
 import '../widgets/transfer_panel.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -144,6 +146,13 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: () => connectionProvider.refreshServers(),
             ),
           ],
+
+          // Settings button
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Settings',
+            onPressed: () => _showSettingsDialog(context),
+          ),
 
           IconButton(
             icon: Icon(
@@ -300,6 +309,13 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       builder: (context) => const ConnectionDialog(),
+    );
+  }
+
+  void _showSettingsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => const SettingsDialog(),
     );
   }
 }

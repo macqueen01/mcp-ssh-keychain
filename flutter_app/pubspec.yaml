@@ -38,6 +38,12 @@ dependencies:
   intl: ^0.18.1
   collection: ^1.18.0
 
+  # Settings persistence
+  shared_preferences: ^2.2.2
+
+  # Open files with external apps
+  url_launcher: ^6.2.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 
 import '../mcp/mcp_client.dart';
 import '../providers/file_browser_provider.dart';
+import '../providers/settings_provider.dart';
 import '../providers/transfer_provider.dart';
+import '../services/file_opener_service.dart';
 import 'file_list_view.dart';
 import 'new_folder_dialog.dart';
 import 'rename_dialog.dart';
@@ -26,6 +28,8 @@ class FileBrowserPanel extends StatefulWidget {
 class _FileBrowserPanelState extends State<FileBrowserPanel> {
   late FileBrowserProvider _provider;
   late TextEditingController _pathController;
+  final FileOpenerService _fileOpenerService = FileOpenerService();
+  bool _isOpeningFile = false;
 
   @override
   void initState() {
@@ -93,7 +97,7 @@ class _FileBrowserPanelState extends State<FileBrowserPanel> {
                             selectedFiles: provider.selectedFiles,
                             sortField: provider.sortField,
                             sortAscending: provider.sortAscending,
-                            onFileDoubleTap: provider.open,
+                            onFileDoubleTap: (file) => _handleFileOpen(context, provider, file),
                             onFileSelect: provider.toggleSelection,
                             onSortChanged: provider.setSortField,
                             onContextMenu: (file, offset) =>
@@ -525,6 +529,105 @@ class _FileBrowserPanelState extends State<FileBrowserPanel> {
         ],
       ),
     );
+  }
+
+  /// Handle file double-click - opens directory or downloads and opens file
+  Future<void> _handleFileOpen(
+      BuildContext context, FileBrowserProvider provider, RemoteFile file) async {
+    if (file.isDirectory) {
+      // Navigate into directory
+      await provider.open(file);
+    } else {
+      // Open file with configured editor
+      await _openFile(context, provider, file);
+    }
+  }
+
+  /// Download and open a file with the configured editor
+  Future<void> _openFile(
+      BuildContext context, FileBrowserProvider provider, RemoteFile file) async {
+    if (_isOpeningFile) return;
+
+    final settingsProvider = context.read<SettingsProvider>();
+    final editor = settingsProvider.getEditorForFile(file.name);
+
+    if (editor == null) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No editor configured. Please set one in Settings.'),
+          ),
+        );
+      }
+      return;
+    }
+
+    setState(() => _isOpeningFile = true);
+
+    // Show progress
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              const SizedBox(width: 12),
+              Text('Downloading ${file.name}...'),
+            ],
+          ),
+          duration: const Duration(seconds: 30),
+        ),
+      );
+    }
+
+    try {
+      final remotePath = provider.getFullPath(file.name);
+      final result = await _fileOpenerService.downloadAndOpen(
+        client: widget.client,
+        server: widget.server.name,
+        remotePath: remotePath,
+        tempDir: settingsProvider.settings.tempDownloadPath,
+        editor: editor,
+      );
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+        if (result.success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Opened ${file.name} with ${editor.name}'),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to open file: ${result.error}'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isOpeningFile = false);
+      }
+    }
   }
 }
 

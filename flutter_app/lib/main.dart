@@ -2,21 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'providers/connection_provider.dart';
+import 'providers/settings_provider.dart';
 import 'providers/transfer_provider.dart';
 import 'screens/home_screen.dart';
 
-void main() {
-  runApp(const McpFileManagerApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize settings provider
+  final settingsProvider = SettingsProvider();
+  await settingsProvider.init();
+
+  runApp(McpFileManagerApp(settingsProvider: settingsProvider));
 }
 
 class McpFileManagerApp extends StatelessWidget {
-  const McpFileManagerApp({super.key});
+  final SettingsProvider settingsProvider;
+
+  const McpFileManagerApp({super.key, required this.settingsProvider});
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ConnectionProvider()),
+        ChangeNotifierProvider.value(value: settingsProvider),
       ],
       child: MaterialApp(
         title: 'MCP File Manager',

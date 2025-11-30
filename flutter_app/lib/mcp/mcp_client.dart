@@ -200,6 +200,34 @@ class McpClient {
     return result.textContent;
   }
 
+  /// Download a file from remote server
+  Future<Map<String, dynamic>> downloadFile({
+    required String server,
+    required String remotePath,
+    required String localPath,
+  }) async {
+    final result = await callTool('ssh_download', {
+      'server': server,
+      'remotePath': remotePath,
+      'localPath': localPath,
+    });
+    return jsonDecode(result.textContent);
+  }
+
+  /// Upload a file to remote server
+  Future<Map<String, dynamic>> uploadFile({
+    required String server,
+    required String localPath,
+    required String remotePath,
+  }) async {
+    final result = await callTool('ssh_upload', {
+      'server': server,
+      'localPath': localPath,
+      'remotePath': remotePath,
+    });
+    return jsonDecode(result.textContent);
+  }
+
   // Private methods
 
   Future<Map<String, dynamic>> _sendRequest(
