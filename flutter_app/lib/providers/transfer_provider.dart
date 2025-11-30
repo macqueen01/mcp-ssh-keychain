@@ -62,6 +62,10 @@ class TransferProvider extends ChangeNotifier {
   final int _maxConcurrent = 3;
   int _idCounter = 0;
 
+  /// Callback called when a transfer completes successfully
+  /// Parameters: (TransferType type, String serverName, String destinationPath)
+  void Function(TransferType type, String serverName, String destinationPath)? onTransferComplete;
+
   // Getters
   List<TransferItem> get transfers => List.unmodifiable(_transfers);
   List<TransferItem> get pendingTransfers =>
@@ -165,6 +169,12 @@ class TransferProvider extends ChangeNotifier {
       pending.status = TransferStatus.completed;
       pending.progress = 1.0;
       pending.completedAt = DateTime.now();
+
+      // Notify completion callback
+      final destinationPath = pending.type == TransferType.upload
+          ? pending.remotePath
+          : pending.localPath;
+      onTransferComplete?.call(pending.type, pending.serverName, destinationPath);
     } catch (e) {
       pending.status = TransferStatus.failed;
       pending.error = e.toString();

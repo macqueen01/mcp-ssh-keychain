@@ -169,6 +169,10 @@ class _HomeScreenState extends State<HomeScreen> {
     // Initialize transfer provider when connected
     if (connectionProvider.isConnected && _transferProvider == null) {
       _transferProvider = TransferProvider(client: connectionProvider.client);
+      // Set up callback to refresh destination after transfer completes
+      _transferProvider!.onTransferComplete = (type, serverName, destinationPath) {
+        _refreshAfterTransfer(type, serverName, destinationPath);
+      };
     } else if (!connectionProvider.isConnected && _transferProvider != null) {
       _transferProvider = null;
     }
@@ -849,5 +853,38 @@ class _HomeScreenState extends State<HomeScreen> {
         duration: const Duration(seconds: 2),
       ),
     );
+  }
+
+  /// Refresh the appropriate browser after a transfer completes
+  void _refreshAfterTransfer(TransferType type, String serverName, String destinationPath) {
+    if (type == TransferType.upload) {
+      // Upload completed - refresh remote browser
+      final remoteBrowserState = _remoteBrowserKey.currentState;
+      if (remoteBrowserState != null) {
+        // Extract directory from destination path
+        final destDir = destinationPath.contains('/')
+            ? destinationPath.substring(0, destinationPath.lastIndexOf('/'))
+            : destinationPath;
+        // Only refresh if we're viewing the same directory
+        if (remoteBrowserState.currentPath == destDir ||
+            destinationPath.startsWith(remoteBrowserState.currentPath)) {
+          remoteBrowserState.refresh();
+        }
+      }
+    } else {
+      // Download completed - refresh local browser
+      final localBrowserState = _localBrowserKey.currentState;
+      if (localBrowserState != null) {
+        // Extract directory from destination path
+        final destDir = destinationPath.contains('/')
+            ? destinationPath.substring(0, destinationPath.lastIndexOf('/'))
+            : destinationPath;
+        // Only refresh if we're viewing the same directory
+        if (localBrowserState.currentPath == destDir ||
+            destinationPath.startsWith(localBrowserState.currentPath)) {
+          localBrowserState.refresh();
+        }
+      }
+    }
   }
 }

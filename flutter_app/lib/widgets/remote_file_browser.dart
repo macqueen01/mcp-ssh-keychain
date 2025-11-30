@@ -6,7 +6,7 @@ import 'package:hugeicons/hugeicons.dart';
 
 import '../mcp/mcp_client.dart';
 import 'server_selector.dart';
-import 'local_file_browser.dart' show DraggedLocalFiles, DraggedRemoteFiles;
+import 'local_file_browser.dart' show DraggedLocalFiles, DraggedRemoteFiles, SortField, SortDirection;
 
 /// Context menu action types
 enum FileAction {
@@ -57,12 +57,58 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
   String? _error;
   bool _showHidden = false;
   bool _isDragOver = false;
+  SortField _sortField = SortField.name;
+  SortDirection _sortDirection = SortDirection.ascending;
 
   /// Get current path for external access
   String get currentPath => _currentPath;
 
   /// Get selected server for external access
   SshServer? get selectedServer => _selectedServer;
+
+  /// Refresh the current directory
+  void refresh() => _loadFiles();
+
+  /// Sort files according to current sort settings
+  void _sortFiles(List<RemoteFile> files) {
+    files.sort((a, b) {
+      // Directories always first
+      if (a.isDirectory && !b.isDirectory) return -1;
+      if (!a.isDirectory && b.isDirectory) return 1;
+
+      int comparison;
+      switch (_sortField) {
+        case SortField.name:
+          comparison = a.name.toLowerCase().compareTo(b.name.toLowerCase());
+          break;
+        case SortField.date:
+          comparison = a.modified.compareTo(b.modified);
+          break;
+        case SortField.size:
+          comparison = a.size.compareTo(b.size);
+          break;
+      }
+
+      return _sortDirection == SortDirection.ascending ? comparison : -comparison;
+    });
+  }
+
+  /// Toggle sort for a field
+  void _toggleSort(SortField field) {
+    setState(() {
+      if (_sortField == field) {
+        // Toggle direction
+        _sortDirection = _sortDirection == SortDirection.ascending
+            ? SortDirection.descending
+            : SortDirection.ascending;
+      } else {
+        // New field, default to ascending
+        _sortField = field;
+        _sortDirection = SortDirection.ascending;
+      }
+      _sortFiles(_files);
+    });
+  }
 
   // Convert SshServer list to ServerInfo list for the selector
   List<ServerInfo> get _serverInfos {
@@ -89,8 +135,10 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
         showHidden: _showHidden,
       );
 
+      final files = result.files;
+      _sortFiles(files);
       setState(() {
-        _files = result.files;
+        _files = files;
         _currentPath = result.path;
         _isLoading = false;
         _selectedFiles.clear();
@@ -417,22 +465,48 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
       ),
       child: Row(
         children: [
-          SizedBox(
-            width: 24,
-            child: Text('', style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant)),
-          ),
+          const SizedBox(width: 24),
           Expanded(
             flex: 3,
-            child: Text('Name', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: colorScheme.onSurfaceVariant)),
+            child: _buildSortableHeader('Name', SortField.name, colorScheme),
           ),
           SizedBox(
             width: 100,
-            child: Text('Date', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: colorScheme.onSurfaceVariant)),
+            child: _buildSortableHeader('Date', SortField.date, colorScheme),
           ),
           SizedBox(
             width: 70,
-            child: Text('Size', textAlign: TextAlign.right, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: colorScheme.onSurfaceVariant)),
+            child: _buildSortableHeader('Size', SortField.size, colorScheme, align: TextAlign.right),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSortableHeader(String label, SortField field, ColorScheme colorScheme, {TextAlign align = TextAlign.left}) {
+    final isActive = _sortField == field;
+    final icon = _sortDirection == SortDirection.ascending
+        ? HugeIcons.strokeRoundedArrowUp01
+        : HugeIcons.strokeRoundedArrowDown01;
+
+    return InkWell(
+      onTap: () => _toggleSort(field),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: align == TextAlign.right ? MainAxisAlignment.end : MainAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+              color: isActive ? colorScheme.primary : colorScheme.onSurfaceVariant,
+            ),
+          ),
+          if (isActive) ...[
+            const SizedBox(width: 2),
+            HugeIcon(icon: icon, size: 10, color: colorScheme.primary),
+          ],
         ],
       ),
     );
