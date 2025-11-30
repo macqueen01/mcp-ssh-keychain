@@ -1,9 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/services.dart';
 
 import '../mcp/mcp_client.dart';
 import 'server_selector.dart';
+
+/// Context menu action types
+enum FileAction {
+  open,
+  download,
+  info,
+  delete,
+  rename,
+  duplicate,
+  move,
+  newFolder,
+  newFile,
+  refresh,
+}
 
 /// Remote file browser widget with server selector - Finder-like design
 class RemoteFileBrowser extends StatefulWidget {
@@ -12,6 +27,8 @@ class RemoteFileBrowser extends StatefulWidget {
   /// Called when a file is double-clicked. Parameters: file, server, full remote path
   final Function(RemoteFile, SshServer, String fullPath)? onFileSelected;
   final Function(List<RemoteFile>, SshServer)? onFilesSelected;
+  /// Called when file needs to be downloaded
+  final Function(RemoteFile, SshServer, String fullPath)? onDownloadFile;
 
   const RemoteFileBrowser({
     super.key,
@@ -19,6 +36,7 @@ class RemoteFileBrowser extends StatefulWidget {
     required this.servers,
     this.onFileSelected,
     this.onFilesSelected,
+    this.onDownloadFile,
   });
 
   @override
@@ -384,88 +402,685 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
 
   Widget _buildFileList(ColorScheme colorScheme) {
     if (_files.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.folder_open, size: 48, color: colorScheme.onSurfaceVariant.withOpacity(0.5)),
-            const SizedBox(height: 8),
-            Text('Empty folder', style: TextStyle(color: colorScheme.onSurfaceVariant)),
-          ],
+      return GestureDetector(
+        onSecondaryTapDown: (details) => _showEmptySpaceContextMenu(context, details.globalPosition),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.folder_open, size: 48, color: colorScheme.onSurfaceVariant.withOpacity(0.5)),
+              const SizedBox(height: 8),
+              Text('Empty folder', style: TextStyle(color: colorScheme.onSurfaceVariant)),
+              const SizedBox(height: 16),
+              Text('Right-click to create a file or folder', style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12)),
+            ],
+          ),
         ),
       );
     }
 
-    return ListView.builder(
-      itemCount: _files.length,
-      itemBuilder: (context, index) {
-        final file = _files[index];
-        final key = '$_currentPath/${file.name}';
-        final isSelected = _selectedFiles.contains(key);
+    return GestureDetector(
+      onSecondaryTapDown: (details) => _showEmptySpaceContextMenu(context, details.globalPosition),
+      behavior: HitTestBehavior.translucent,
+      child: ListView.builder(
+        itemCount: _files.length,
+        itemBuilder: (context, index) {
+          final file = _files[index];
+          final key = '$_currentPath/${file.name}';
+          final isSelected = _selectedFiles.contains(key);
 
-        return _buildFileRow(file, isSelected, colorScheme);
-      },
+          return _buildFileRow(file, isSelected, colorScheme);
+        },
+      ),
     );
   }
 
   Widget _buildFileRow(RemoteFile file, bool isSelected, ColorScheme colorScheme) {
-    return InkWell(
-      onTap: () => _toggleSelection(file),
-      onDoubleTap: () => _openItem(file),
-      child: Container(
-        height: 24,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? colorScheme.primaryContainer.withOpacity(0.5) : null,
+    return GestureDetector(
+      onSecondaryTapDown: (details) => _showFileContextMenu(context, details.globalPosition, file),
+      child: InkWell(
+        onTap: () => _toggleSelection(file),
+        onDoubleTap: () => _openItem(file),
+        child: Container(
+          height: 24,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? colorScheme.primaryContainer.withOpacity(0.5) : null,
+          ),
+          child: Row(
+            children: [
+              // Icon
+              SizedBox(
+                width: 24,
+                child: Icon(
+                  _getFileIcon(file),
+                  size: 16,
+                  color: _getFileIconColor(file, colorScheme),
+                ),
+              ),
+              // Name
+              Expanded(
+                flex: 3,
+                child: Text(
+                  file.name,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: colorScheme.onSurface,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              // Date
+              SizedBox(
+                width: 100,
+                child: Text(
+                  _formatDate(file.modified),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+              // Size
+              SizedBox(
+                width: 70,
+                child: Text(
+                  file.formattedSize,
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-        child: Row(
-          children: [
-            // Icon
-            SizedBox(
-              width: 24,
-              child: Icon(
-                _getFileIcon(file),
-                size: 16,
-                color: _getFileIconColor(file, colorScheme),
-              ),
+      ),
+    );
+  }
+
+  /// Show context menu for a file
+  void _showFileContextMenu(BuildContext context, Offset position, RemoteFile file) async {
+    final colorScheme = Theme.of(context).colorScheme;
+    final fullPath = _currentPath.endsWith('/')
+        ? '$_currentPath${file.name}'
+        : '$_currentPath/${file.name}';
+
+    final result = await showMenu<FileAction>(
+      context: context,
+      position: RelativeRect.fromLTRB(position.dx, position.dy, position.dx, position.dy),
+      items: [
+        if (!file.isDirectory) ...[
+          PopupMenuItem(
+            value: FileAction.download,
+            child: Row(
+              children: [
+                Icon(Icons.download, size: 18, color: colorScheme.onSurface),
+                const SizedBox(width: 12),
+                Text('Download "${file.name}"'),
+              ],
             ),
-            // Name
-            Expanded(
-              flex: 3,
-              child: Text(
-                file.name,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: colorScheme.onSurface,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
+          ),
+          PopupMenuItem(
+            value: FileAction.open,
+            child: Row(
+              children: [
+                Icon(Icons.open_in_new, size: 18, color: colorScheme.onSurface),
+                const SizedBox(width: 12),
+                const Text('Open'),
+              ],
             ),
-            // Date
-            SizedBox(
-              width: 100,
-              child: Text(
-                _formatDate(file.modified),
-                style: TextStyle(
-                  fontSize: 11,
-                  color: colorScheme.onSurfaceVariant,
+          ),
+          const PopupMenuDivider(),
+        ],
+        PopupMenuItem(
+          value: FileAction.info,
+          child: Row(
+            children: [
+              Icon(Icons.info_outline, size: 18, color: colorScheme.onSurface),
+              const SizedBox(width: 12),
+              const Text('Info'),
+            ],
+          ),
+        ),
+        const PopupMenuDivider(),
+        PopupMenuItem(
+          value: FileAction.rename,
+          child: Row(
+            children: [
+              Icon(Icons.edit, size: 18, color: colorScheme.onSurface),
+              const SizedBox(width: 12),
+              const Text('Rename'),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: FileAction.duplicate,
+          child: Row(
+            children: [
+              Icon(Icons.copy, size: 18, color: colorScheme.onSurface),
+              const SizedBox(width: 12),
+              const Text('Duplicate'),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: FileAction.move,
+          child: Row(
+            children: [
+              Icon(Icons.drive_file_move, size: 18, color: colorScheme.onSurface),
+              const SizedBox(width: 12),
+              const Text('Move...'),
+            ],
+          ),
+        ),
+        const PopupMenuDivider(),
+        PopupMenuItem(
+          value: FileAction.delete,
+          child: Row(
+            children: [
+              Icon(Icons.delete, size: 18, color: colorScheme.error),
+              const SizedBox(width: 12),
+              Text('Delete', style: TextStyle(color: colorScheme.error)),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    if (result != null) {
+      await _handleFileAction(result, file, fullPath);
+    }
+  }
+
+  /// Show context menu for empty space
+  void _showEmptySpaceContextMenu(BuildContext context, Offset position) async {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    final result = await showMenu<FileAction>(
+      context: context,
+      position: RelativeRect.fromLTRB(position.dx, position.dy, position.dx, position.dy),
+      items: [
+        PopupMenuItem(
+          value: FileAction.newFolder,
+          child: Row(
+            children: [
+              Icon(Icons.create_new_folder, size: 18, color: colorScheme.onSurface),
+              const SizedBox(width: 12),
+              const Text('New folder'),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: FileAction.newFile,
+          child: Row(
+            children: [
+              Icon(Icons.note_add, size: 18, color: colorScheme.onSurface),
+              const SizedBox(width: 12),
+              const Text('New file'),
+            ],
+          ),
+        ),
+        const PopupMenuDivider(),
+        PopupMenuItem(
+          value: FileAction.refresh,
+          child: Row(
+            children: [
+              Icon(Icons.refresh, size: 18, color: colorScheme.onSurface),
+              const SizedBox(width: 12),
+              const Text('Refresh'),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    if (result != null) {
+      await _handleFileAction(result, null, null);
+    }
+  }
+
+  /// Handle context menu action
+  Future<void> _handleFileAction(FileAction action, RemoteFile? file, String? fullPath) async {
+    switch (action) {
+      case FileAction.open:
+        if (file != null && fullPath != null) {
+          widget.onFileSelected?.call(file, _selectedServer!, fullPath);
+        }
+        break;
+
+      case FileAction.download:
+        if (file != null && fullPath != null) {
+          widget.onDownloadFile?.call(file, _selectedServer!, fullPath);
+        }
+        break;
+
+      case FileAction.info:
+        if (file != null && fullPath != null) {
+          await _showFileInfo(file, fullPath);
+        }
+        break;
+
+      case FileAction.delete:
+        if (file != null && fullPath != null) {
+          await _deleteFile(file, fullPath);
+        }
+        break;
+
+      case FileAction.rename:
+        if (file != null && fullPath != null) {
+          await _renameFile(file, fullPath);
+        }
+        break;
+
+      case FileAction.duplicate:
+        if (file != null && fullPath != null) {
+          await _duplicateFile(file, fullPath);
+        }
+        break;
+
+      case FileAction.move:
+        if (file != null && fullPath != null) {
+          await _moveFile(file, fullPath);
+        }
+        break;
+
+      case FileAction.newFolder:
+        await _createNewFolder();
+        break;
+
+      case FileAction.newFile:
+        await _createNewFile();
+        break;
+
+      case FileAction.refresh:
+        await _loadFiles();
+        break;
+    }
+  }
+
+  /// Show file info dialog
+  Future<void> _showFileInfo(RemoteFile file, String fullPath) async {
+    try {
+      final result = await widget.client.execute(
+        _selectedServer!.name,
+        'stat "$fullPath" && file "$fullPath"',
+        timeout: 10000,
+      );
+
+      if (!mounted) return;
+
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Row(
+            children: [
+              Icon(_getFileIcon(file), color: _getFileIconColor(file, Theme.of(context).colorScheme)),
+              const SizedBox(width: 12),
+              Expanded(child: Text(file.name, overflow: TextOverflow.ellipsis)),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildInfoRow('Path', fullPath),
+                _buildInfoRow('Size', file.formattedSize),
+                _buildInfoRow('Modified', file.modified),
+                _buildInfoRow('Permissions', file.permissions),
+                const SizedBox(height: 16),
+                const Text('Details:', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: SelectableText(
+                    result.stdout.isNotEmpty ? result.stdout : result.stderr,
+                    style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                  ),
                 ),
-              ),
+              ],
             ),
-            // Size
-            SizedBox(
-              width: 70,
-              child: Text(
-                file.formattedSize,
-                textAlign: TextAlign.right,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
             ),
           ],
         ),
+      );
+    } catch (e) {
+      _showError('Failed to get file info: $e');
+    }
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text('$label:', style: const TextStyle(fontWeight: FontWeight.w500)),
+          ),
+          Expanded(child: SelectableText(value)),
+        ],
+      ),
+    );
+  }
+
+  /// Delete a file or directory
+  Future<void> _deleteFile(RemoteFile file, String fullPath) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Delete'),
+        content: Text('Are you sure you want to delete "${file.name}"?\n\nThis action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      final flags = file.isDirectory ? '-rf' : '-f';
+      final result = await widget.client.execute(
+        _selectedServer!.name,
+        'rm $flags "$fullPath"',
+        timeout: 30000,
+      );
+
+      if (result.code == 0) {
+        _showSuccess('Deleted "${file.name}"');
+        await _loadFiles();
+      } else {
+        _showError('Failed to delete: ${result.stderr}');
+      }
+    } catch (e) {
+      _showError('Failed to delete: $e');
+    }
+  }
+
+  /// Rename a file or directory
+  Future<void> _renameFile(RemoteFile file, String fullPath) async {
+    final controller = TextEditingController(text: file.name);
+
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Rename'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'New name',
+            border: OutlineInputBorder(),
+          ),
+          autofocus: true,
+          onSubmitted: (value) => Navigator.of(context).pop(value),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(controller.text),
+            child: const Text('Rename'),
+          ),
+        ],
+      ),
+    );
+
+    if (newName == null || newName.isEmpty || newName == file.name) return;
+
+    try {
+      final newPath = _currentPath.endsWith('/')
+          ? '$_currentPath$newName'
+          : '$_currentPath/$newName';
+
+      final result = await widget.client.execute(
+        _selectedServer!.name,
+        'mv "$fullPath" "$newPath"',
+        timeout: 10000,
+      );
+
+      if (result.code == 0) {
+        _showSuccess('Renamed to "$newName"');
+        await _loadFiles();
+      } else {
+        _showError('Failed to rename: ${result.stderr}');
+      }
+    } catch (e) {
+      _showError('Failed to rename: $e');
+    }
+  }
+
+  /// Duplicate a file or directory
+  Future<void> _duplicateFile(RemoteFile file, String fullPath) async {
+    try {
+      // Generate duplicate name
+      final baseName = file.name;
+      final ext = baseName.contains('.') ? '.${baseName.split('.').last}' : '';
+      final nameWithoutExt = ext.isNotEmpty ? baseName.substring(0, baseName.length - ext.length) : baseName;
+      final duplicateName = '${nameWithoutExt} copy$ext';
+
+      final newPath = _currentPath.endsWith('/')
+          ? '$_currentPath$duplicateName'
+          : '$_currentPath/$duplicateName';
+
+      final flags = file.isDirectory ? '-r' : '';
+      final result = await widget.client.execute(
+        _selectedServer!.name,
+        'cp $flags "$fullPath" "$newPath"',
+        timeout: 60000,
+      );
+
+      if (result.code == 0) {
+        _showSuccess('Created "$duplicateName"');
+        await _loadFiles();
+      } else {
+        _showError('Failed to duplicate: ${result.stderr}');
+      }
+    } catch (e) {
+      _showError('Failed to duplicate: $e');
+    }
+  }
+
+  /// Move a file (shows path dialog)
+  Future<void> _moveFile(RemoteFile file, String fullPath) async {
+    final controller = TextEditingController(text: fullPath);
+
+    final newPath = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Move "${file.name}"'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'Destination path',
+            border: OutlineInputBorder(),
+            helperText: 'Enter the full destination path',
+          ),
+          autofocus: true,
+          onSubmitted: (value) => Navigator.of(context).pop(value),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(controller.text),
+            child: const Text('Move'),
+          ),
+        ],
+      ),
+    );
+
+    if (newPath == null || newPath.isEmpty || newPath == fullPath) return;
+
+    try {
+      final result = await widget.client.execute(
+        _selectedServer!.name,
+        'mv "$fullPath" "$newPath"',
+        timeout: 30000,
+      );
+
+      if (result.code == 0) {
+        _showSuccess('Moved to "$newPath"');
+        await _loadFiles();
+      } else {
+        _showError('Failed to move: ${result.stderr}');
+      }
+    } catch (e) {
+      _showError('Failed to move: $e');
+    }
+  }
+
+  /// Create new folder
+  Future<void> _createNewFolder() async {
+    final controller = TextEditingController();
+
+    final folderName = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('New Folder'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'Folder name',
+            border: OutlineInputBorder(),
+          ),
+          autofocus: true,
+          onSubmitted: (value) => Navigator.of(context).pop(value),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(controller.text),
+            child: const Text('Create'),
+          ),
+        ],
+      ),
+    );
+
+    if (folderName == null || folderName.isEmpty) return;
+
+    try {
+      final newPath = _currentPath.endsWith('/')
+          ? '$_currentPath$folderName'
+          : '$_currentPath/$folderName';
+
+      final result = await widget.client.execute(
+        _selectedServer!.name,
+        'mkdir -p "$newPath"',
+        timeout: 10000,
+      );
+
+      if (result.code == 0) {
+        _showSuccess('Created folder "$folderName"');
+        await _loadFiles();
+      } else {
+        _showError('Failed to create folder: ${result.stderr}');
+      }
+    } catch (e) {
+      _showError('Failed to create folder: $e');
+    }
+  }
+
+  /// Create new file
+  Future<void> _createNewFile() async {
+    final controller = TextEditingController();
+
+    final fileName = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('New File'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'File name',
+            border: OutlineInputBorder(),
+            hintText: 'e.g., example.txt',
+          ),
+          autofocus: true,
+          onSubmitted: (value) => Navigator.of(context).pop(value),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(controller.text),
+            child: const Text('Create'),
+          ),
+        ],
+      ),
+    );
+
+    if (fileName == null || fileName.isEmpty) return;
+
+    try {
+      final newPath = _currentPath.endsWith('/')
+          ? '$_currentPath$fileName'
+          : '$_currentPath/$fileName';
+
+      final result = await widget.client.execute(
+        _selectedServer!.name,
+        'touch "$newPath"',
+        timeout: 10000,
+      );
+
+      if (result.code == 0) {
+        _showSuccess('Created file "$fileName"');
+        await _loadFiles();
+      } else {
+        _showError('Failed to create file: ${result.stderr}');
+      }
+    } catch (e) {
+      _showError('Failed to create file: $e');
+    }
+  }
+
+  void _showSuccess(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Theme.of(context).colorScheme.error,
+        duration: const Duration(seconds: 4),
       ),
     );
   }
