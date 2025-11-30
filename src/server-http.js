@@ -442,9 +442,12 @@ async function main() {
 
         case 'tools/call':
           try {
+            console.error(`[Server] Calling tool: ${params.name}`);
             const result = await mcpServer.callTool(params.name, params.arguments || {});
+            console.error(`[Server] Tool ${params.name} completed`);
             response = { jsonrpc: '2.0', result, id };
           } catch (err) {
+            console.error(`[Server] Tool ${params.name} error:`, err.message);
             response = {
               jsonrpc: '2.0',
               error: { code: -32000, message: err.message },

@@ -5,6 +5,7 @@ import '../providers/connection_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/transfer_provider.dart';
 import '../services/embedded_server_service.dart';
+import '../widgets/advanced_settings_dialog.dart';
 import '../widgets/connection_dialog.dart';
 import '../widgets/server_sidebar.dart';
 import '../widgets/file_browser_panel.dart';
@@ -387,11 +388,18 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
 
-          // Settings button
+          // Settings button (editor settings)
           IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: 'Settings',
+            icon: const Icon(Icons.edit_outlined),
+            tooltip: 'Editor Settings',
             onPressed: () => _showSettingsDialog(context),
+          ),
+
+          // Advanced settings button (servers, tools, Claude Code)
+          IconButton(
+            icon: const Icon(Icons.tune),
+            tooltip: 'Advanced Settings',
+            onPressed: () => _showAdvancedSettingsDialog(context),
           ),
 
           IconButton(
@@ -486,6 +494,13 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       builder: (context) => const SettingsDialog(),
+    );
+  }
+
+  void _showAdvancedSettingsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => const AdvancedSettingsDialog(),
     );
   }
 }

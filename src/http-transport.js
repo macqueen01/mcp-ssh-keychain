@@ -81,6 +81,15 @@ export class HttpServerTransport extends EventEmitter {
         ws.on('message', (data) => {
           try {
             const message = JSON.parse(data.toString());
+            // Log more details for tools/call
+            if (message.method === 'tools/call' && message.params) {
+              console.error(`[HTTP Transport] Client ${id} tools/call: ${message.params.name} (id: ${message.id})`);
+              if (message.params.arguments) {
+                console.error(`[HTTP Transport]   args: ${JSON.stringify(message.params.arguments).substring(0, 200)}`);
+              }
+            } else {
+              console.error(`[HTTP Transport] Client ${id} message: ${message.method || 'response'} ${message.id || ''}`);
+            }
             // Emit message for MCP server to handle
             this.emit('message', message, id);
           } catch (err) {
@@ -126,11 +135,15 @@ export class HttpServerTransport extends EventEmitter {
    */
   send(message, clientId = null) {
     const data = JSON.stringify(message);
+    console.error(`[HTTP Transport] Sending response to client ${clientId}: id=${message.id}, size=${data.length} bytes`);
 
     if (clientId !== null) {
       const ws = this.clients.get(clientId);
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(data);
+        console.error(`[HTTP Transport] Response sent successfully`);
+      } else {
+        console.error(`[HTTP Transport] Client ${clientId} not found or not ready (ws=${ws ? 'exists' : 'null'}, state=${ws?.readyState})`);
       }
     } else {
       // Broadcast to all clients

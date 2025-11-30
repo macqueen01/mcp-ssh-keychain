@@ -273,19 +273,25 @@ class McpClient {
 
   void _handleMessage(dynamic message) {
     try {
-      final data = jsonDecode(message as String) as Map<String, dynamic>;
+      print('[MCP Client] Received message: ${(message as String).substring(0, (message.length > 200 ? 200 : message.length))}...');
+      final data = jsonDecode(message) as Map<String, dynamic>;
 
       // Check if it's a response to a request
       if (data.containsKey('id') && data['id'] != null) {
         final id = data['id'] as int;
+        print('[MCP Client] Response for id=$id, pending requests: ${_pendingRequests.keys.toList()}');
         final completer = _pendingRequests.remove(id);
 
         if (completer != null) {
           if (data.containsKey('error')) {
+            print('[MCP Client] Completing with error: ${data['error']}');
             completer.completeError(McpError.fromJson(data['error']));
           } else {
+            print('[MCP Client] Completing successfully');
             completer.complete(data['result'] ?? {});
           }
+        } else {
+          print('[MCP Client] No pending request found for id=$id');
         }
       }
       // Check if it's a notification
@@ -296,6 +302,7 @@ class McpClient {
         ));
       }
     } catch (e) {
+      print('[MCP Client] Error parsing message: $e');
       _eventController.add(McpEvent.error('Failed to parse message: $e'));
     }
   }
