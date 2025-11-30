@@ -293,10 +293,24 @@ class McpSshServer {
     };
   }
 
-  async listFiles({ server, path = '~', showHidden = false }) {
+  async listFiles({ server, path, showHidden = false }) {
     const ssh = await getConnection(server);
     const lsFlags = showHidden ? '-la' : '-l';
-    const result = await ssh.execCommand(`ls ${lsFlags} --time-style=long-iso "${path}" 2>/dev/null || ls ${lsFlags} "${path}"`, { timeout: 10000 });
+
+    // Get server config to check for default_dir
+    const serverConfig = configLoader.getServer(server);
+
+    // Use default_dir if no path provided, otherwise use $HOME as fallback
+    let targetPath = path;
+    if (!path || path === '~') {
+      targetPath = serverConfig?.default_dir || '$HOME';
+    } else if (path.startsWith('~/')) {
+      // Handle tilde expansion - shell doesn't expand ~ inside quotes
+      targetPath = path.replace(/^~/, '$HOME');
+    }
+
+    // Use eval to allow variable expansion, with proper quoting for paths with spaces
+    const result = await ssh.execCommand(`eval 'ls ${lsFlags} --time-style=long-iso "${targetPath}" 2>/dev/null || ls ${lsFlags} "${targetPath}"'`, { timeout: 10000 });
 
     // Parse ls output
     const lines = result.stdout.trim().split('\n').filter(line => line && !line.startsWith('total'));
@@ -325,7 +339,7 @@ class McpSshServer {
     return {
       content: [{
         type: 'text',
-        text: JSON.stringify({ path, files }, null, 2)
+        text: JSON.stringify({ path: targetPath, files }, null, 2)
       }]
     };
   }
