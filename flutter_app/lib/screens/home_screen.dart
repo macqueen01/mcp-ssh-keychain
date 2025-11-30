@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../mcp/mcp_client.dart';
 import '../providers/connection_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/transfer_provider.dart';
 import '../services/embedded_server_service.dart';
+import '../services/file_opener_service.dart';
 import '../widgets/advanced_settings_dialog.dart';
 import '../widgets/connection_dialog.dart';
 import '../widgets/local_file_browser.dart';
@@ -34,6 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Auto-connect state
   final EmbeddedServerService _serverService = EmbeddedServerService();
+  final FileOpenerService _fileOpenerService = FileOpenerService();
   StartupState _startupState = StartupState.initializing;
   String? _startupError;
   String _startupMessage = 'Initializing...';
@@ -478,10 +481,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Local file browser
                 Expanded(
                   child: LocalFileBrowser(
-                    onFileSelected: (file) {
-                      // Handle local file selection
-                      print('Local file selected: ${file.fullPath}');
-                    },
+                    onFileSelected: (file) => _openLocalFile(context, file.fullPath),
                   ),
                 ),
               ],
@@ -523,10 +523,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: RemoteFileBrowser(
                   client: connectionProvider.client,
                   servers: connectionProvider.servers,
-                  onFileSelected: (file, server) {
-                    // Handle remote file selection
-                    print('Remote file selected: ${file.name} on ${server.name}');
-                  },
+                  onFileSelected: (file, server, fullPath) => _openRemoteFile(context, connectionProvider, server, fullPath),
                 ),
               ),
             ],
@@ -555,5 +552,116 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (context) => const AdvancedSettingsDialog(),
     );
+  }
+
+  /// Open a local file with the default editor
+  Future<void> _openLocalFile(BuildContext context, String filePath) async {
+    final settingsProvider = context.read<SettingsProvider>();
+    final editor = settingsProvider.settings.currentEditor;
+
+    if (editor == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('No editor configured. Please set a default editor in Settings.'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+      return;
+    }
+
+    print('[HomeScreen] Opening local file: $filePath with ${editor.name}');
+
+    final opened = await _fileOpenerService.openWithEditor(
+      filePath: filePath,
+      editor: editor,
+    );
+
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to open file with ${editor.name}'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    }
+  }
+
+  /// Open a remote file (download then open with editor)
+  Future<void> _openRemoteFile(
+    BuildContext context,
+    ConnectionProvider connectionProvider,
+    SshServer server,
+    String remotePath,
+  ) async {
+    final settingsProvider = context.read<SettingsProvider>();
+    final editor = settingsProvider.settings.currentEditor;
+    final fileName = remotePath.split('/').last;
+
+    if (editor == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('No editor configured. Please set a default editor in Settings.'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+      return;
+    }
+
+    print('[HomeScreen] Opening remote file: $remotePath from ${server.name}');
+
+    // Show loading indicator
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            const SizedBox(width: 12),
+            Text('Downloading $fileName...'),
+          ],
+        ),
+        duration: const Duration(seconds: 30),
+      ),
+    );
+
+    // Get temp directory
+    final tempDir = await _fileOpenerService.getDefaultTempDir();
+
+    // Download and open
+    final result = await _fileOpenerService.downloadAndOpen(
+      client: connectionProvider.client,
+      server: server.name,
+      remotePath: remotePath,
+      tempDir: tempDir,
+      editor: editor,
+    );
+
+    if (!mounted) return;
+
+    // Hide loading snackbar
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+    if (result.success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Opened $fileName with ${editor.name}'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to open file: ${result.error}'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    }
   }
 }

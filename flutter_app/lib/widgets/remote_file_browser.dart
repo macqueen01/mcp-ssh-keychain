@@ -9,7 +9,8 @@ import 'server_selector.dart';
 class RemoteFileBrowser extends StatefulWidget {
   final McpClient client;
   final List<SshServer> servers;
-  final Function(RemoteFile, SshServer)? onFileSelected;
+  /// Called when a file is double-clicked. Parameters: file, server, full remote path
+  final Function(RemoteFile, SshServer, String fullPath)? onFileSelected;
   final Function(List<RemoteFile>, SshServer)? onFilesSelected;
 
   const RemoteFileBrowser({
@@ -96,7 +97,11 @@ class _RemoteFileBrowserState extends State<RemoteFileBrowser> {
           : '$_currentPath/${file.name}';
       _navigateTo(newPath);
     } else {
-      widget.onFileSelected?.call(file, _selectedServer!);
+      // Build full path for the file
+      final fullPath = _currentPath.endsWith('/')
+          ? '$_currentPath${file.name}'
+          : '$_currentPath/${file.name}';
+      widget.onFileSelected?.call(file, _selectedServer!, fullPath);
     }
   }
 
