@@ -349,7 +349,7 @@ class _FileBrowserPanelState extends State<FileBrowserPanel> {
       RemoteFile file, Offset offset) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    showMenu(
+    showMenu<void>(
       context: context,
       position: RelativeRect.fromLTRB(
         offset.dx,
@@ -357,9 +357,9 @@ class _FileBrowserPanelState extends State<FileBrowserPanel> {
         offset.dx + 1,
         offset.dy + 1,
       ),
-      items: [
+      items: <PopupMenuEntry<void>>[
         if (file.isDirectory)
-          PopupMenuItem(
+          PopupMenuItem<void>(
             child: const Row(
               children: [
                 Icon(Icons.folder_open, size: 20),
@@ -369,7 +369,7 @@ class _FileBrowserPanelState extends State<FileBrowserPanel> {
             ),
             onTap: () => provider.open(file),
           ),
-        PopupMenuItem(
+        PopupMenuItem<void>(
           child: const Row(
             children: [
               Icon(Icons.drive_file_rename_outline, size: 20),
@@ -388,7 +388,7 @@ class _FileBrowserPanelState extends State<FileBrowserPanel> {
             });
           },
         ),
-        PopupMenuItem(
+        PopupMenuItem<void>(
           child: Row(
             children: [
               Icon(Icons.delete_outline, size: 20, color: colorScheme.error),
@@ -407,7 +407,7 @@ class _FileBrowserPanelState extends State<FileBrowserPanel> {
           },
         ),
         const PopupMenuDivider(),
-        PopupMenuItem(
+        PopupMenuItem<void>(
           child: const Row(
             children: [
               Icon(Icons.info_outline, size: 20),
