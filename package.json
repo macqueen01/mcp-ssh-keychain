@@ -1,23 +1,13 @@
 {
-  "name": "mcp-ssh-manager",
-  "version": "3.1.4",
-  "description": "MCP SSH Manager: Model Context Protocol server for SSH remote server management. Control SSH connections from Claude Code and OpenAI Codex - execute commands, transfer files, database operations, backups, health monitoring, and DevOps automation. NEW: Tool activation system reduces context usage by 92%",
+  "name": "mcp-ssh-keychain",
+  "version": "1.0.0",
+  "description": "MCP SSH server with macOS Keychain integration",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
-    "setup": "npm install && pip install -r tools/requirements.txt",
-    "configure": "python tools/server-manager.py",
-    "test-connection": "python tools/test-connection.py",
-    "test": "npm run test:profiles && npm run test:aliases && npm run test:hooks && npm run test:tools",
-    "test:profiles": "node tests/test-profiles.js",
-    "test:aliases": "node tests/test-command-aliases.js",
-    "test:hooks": "node tests/test-hooks.js",
-    "test:tools": "node tests/test-tool-registry.js",
-    "test:all": "npm test && ./scripts/validate.sh",
-    "validate": "./scripts/validate.sh",
-    "lint": "eslint src/*.js",
-    "format": "prettier --write 'src/**/*.js' 'tests/**/*.js'"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "keywords": [
     "mcp",
@@ -69,18 +59,20 @@
   },
   "homepage": "https://github.com/bvisible/mcp-ssh-manager#readme",
   "dependencies": {
-    "@iarna/toml": "^2.2.5",
     "@modelcontextprotocol/sdk": "^1.17.2",
+    "better-sqlite3": "^11.3.0",
+    "cross-keychain": "^1.0.1",
     "dotenv": "^16.4.5",
+    "nanoid": "^5.0.7",
     "ssh2": "^1.17.0",
-    "uuid": "^11.1.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {
     "eslint": "^8.56.0",
-    "prettier": "^3.2.4"
+    "prettier": "^3.2.4",
+    "vitest": "^4.0.18"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   }
 }
