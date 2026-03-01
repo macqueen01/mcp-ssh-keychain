@@ -3,11 +3,10 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { logger } from './logger.js';
+import { closeDatabase } from './database.js';
 
-// Connection pool (will be populated by connection-pool.js in Task 5)
 const connections = new Map();
 
-// MCP Server initialization
 const server = new McpServer({
   name: 'mcp-ssh-keychain',
   version: '1.0.0'
@@ -17,24 +16,27 @@ const server = new McpServer({
   }
 });
 
-// Tool handlers will be registered here in later tasks (Tasks 4-9)
-
-// Graceful shutdown
-process.on('SIGINT', async () => {
+async function shutdown() {
   logger.info('Shutting down MCP SSH Keychain server...');
-  // Close all SSH connections (will be implemented in Task 5)
-  // Close SQLite database (will be implemented in Task 3)
+  
+  for (const [name, conn] of connections.entries()) {
+    try {
+      await conn.dispose();
+      logger.debug(`Closed SSH connection: ${name}`);
+    } catch (error) {
+      logger.error(`Failed to close SSH connection ${name}:`, { error: error.message });
+    }
+  }
+  connections.clear();
+  
+  closeDatabase();
+  
   process.exit(0);
-});
+}
 
-process.on('SIGTERM', async () => {
-  logger.info('Shutting down MCP SSH Keychain server...');
-  // Close all SSH connections (will be implemented in Task 5)
-  // Close SQLite database (will be implemented in Task 3)
-  process.exit(0);
-});
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
 
-// Start server
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
