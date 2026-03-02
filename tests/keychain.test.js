@@ -30,7 +30,7 @@ describe('Keychain Integration', () => {
       const result = await getCredential('root', '10.11.2.7', 22);
 
       expect(result).toBe('secret-password');
-      expect(getPassword).toHaveBeenCalledWith('mcp-ssh-keychain', 'root@10.11.2.7:22');
+      expect(getPassword).toHaveBeenCalledWith('mcp-ssh-keychain', 'root@10.11.2.7-22');
     });
 
     it('should return null when credential not found', async () => {
@@ -46,7 +46,7 @@ describe('Keychain Integration', () => {
 
       await getCredential('user', 'host.example.com');
 
-      expect(getPassword).toHaveBeenCalledWith('mcp-ssh-keychain', 'user@host.example.com:22');
+      expect(getPassword).toHaveBeenCalledWith('mcp-ssh-keychain', 'user@host.example.com-22');
     });
   });
 
@@ -58,7 +58,7 @@ describe('Keychain Integration', () => {
       const result = await storeCredentialOOB('root', '10.11.2.7', 22);
 
       expect(result.success).toBe(true);
-      expect(setPassword).toHaveBeenCalledWith('mcp-ssh-keychain', 'root@10.11.2.7:22', 'my-secure-password');
+      expect(setPassword).toHaveBeenCalledWith('mcp-ssh-keychain', 'root@10.11.2.7-22', 'my-secure-password');
       expect(execSync).toHaveBeenCalledWith(
         expect.stringContaining('osascript -e'),
         expect.objectContaining({ encoding: 'utf8' })
@@ -105,7 +105,7 @@ describe('Keychain Integration', () => {
 
       await storeCredentialOOB('deploy', 'server.example.com', 2222);
 
-      expect(setPassword).toHaveBeenCalledWith('mcp-ssh-keychain', 'deploy@server.example.com:2222', 'password123');
+      expect(setPassword).toHaveBeenCalledWith('mcp-ssh-keychain', 'deploy@server.example.com-2222', 'password123');
     });
 
     it('should never expose password in error messages', async () => {
@@ -127,7 +127,7 @@ describe('Keychain Integration', () => {
       const result = await deleteCredential('root', '10.11.2.7', 22);
 
       expect(result.success).toBe(true);
-      expect(deletePassword).toHaveBeenCalledWith('mcp-ssh-keychain', 'root@10.11.2.7:22');
+      expect(deletePassword).toHaveBeenCalledWith('mcp-ssh-keychain', 'root@10.11.2.7-22');
     });
 
     it('should handle credential not found', async () => {
@@ -152,9 +152,9 @@ describe('Keychain Integration', () => {
   describe('listCredentials', () => {
     it('should list all credentials without passwords', async () => {
       const mockOutput = `
-        "acct"<blob>="root@10.11.2.7:22"
-        "acct"<blob>="admin@server.example.com:2222"
-        "acct"<blob>="deploy@staging.example.com:22"
+        "acct"<blob>="root@10.11.2.7-22"
+        "acct"<blob>="admin@server.example.com-2222"
+        "acct"<blob>="deploy@staging.example.com-22"
       `;
       execSync.mockReturnValue(mockOutput);
 
@@ -162,19 +162,19 @@ describe('Keychain Integration', () => {
 
       expect(result).toHaveLength(3);
       expect(result[0]).toEqual({
-        account: 'root@10.11.2.7:22',
+        account: 'root@10.11.2.7-22',
         user: 'root',
         host: '10.11.2.7',
         port: '22'
       });
       expect(result[1]).toEqual({
-        account: 'admin@server.example.com:2222',
+        account: 'admin@server.example.com-2222',
         user: 'admin',
         host: 'server.example.com',
         port: '2222'
       });
       expect(result[2]).toEqual({
-        account: 'deploy@staging.example.com:22',
+        account: 'deploy@staging.example.com-22',
         user: 'deploy',
         host: 'staging.example.com',
         port: '22'
@@ -192,7 +192,7 @@ describe('Keychain Integration', () => {
     });
 
     it('should never include password field in results', async () => {
-      const mockOutput = '"acct"<blob>="user@host.com:22"';
+      const mockOutput = '"acct"<blob>="user@host.com-22"';
       execSync.mockReturnValue(mockOutput);
 
       const result = await listCredentials();
@@ -203,17 +203,17 @@ describe('Keychain Integration', () => {
 
     it('should handle malformed account strings', async () => {
       const mockOutput = `
-        "acct"<blob>="root@10.11.2.7:22"
+        "acct"<blob>="root@10.11.2.7-22"
         "acct"<blob>="invalid-account-format"
-        "acct"<blob>="admin@server.example.com:2222"
+        "acct"<blob>="admin@server.example.com-2222"
       `;
       execSync.mockReturnValue(mockOutput);
 
       const result = await listCredentials();
 
       expect(result).toHaveLength(2);
-      expect(result[0].account).toBe('root@10.11.2.7:22');
-      expect(result[1].account).toBe('admin@server.example.com:2222');
+      expect(result[0].account).toBe('root@10.11.2.7-22');
+      expect(result[1].account).toBe('admin@server.example.com-2222');
     });
 
     it('should handle security command failures gracefully', async () => {
