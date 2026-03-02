@@ -8,10 +8,10 @@ const SERVICE_NAME = 'mcp-ssh-keychain';
  * @param {string} user - SSH username
  * @param {string} host - SSH hostname
  * @param {number|string} port - SSH port (default 22)
- * @returns {string} Formatted account string (e.g., "user@host:22")
+ * @returns {string} Formatted account string (e.g., "user@host-22")
  */
 function formatAccount(user, host, port = 22) {
-  return `${user}@${host}:${port}`;
+  return `${user}@${host}-${port}`;
 }
 
 /**
@@ -124,7 +124,7 @@ export async function listCredentials() {
       const match = line.match(/"acct"<blob>="([^"]+)"/);
       if (match) {
         const account = match[1];
-        const accountMatch = account.match(/^(.+)@(.+):(\d+)$/);
+        const accountMatch = account.match(/^(.+)@(.+)-(\d+)$/);
         if (accountMatch) {
           accounts.push({
             account: account,
