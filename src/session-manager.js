@@ -1,10 +1,12 @@
 /**
  * SSH Session Manager
  * Manages persistent SSH sessions with state and context
+ * Tmux-style interactive sessions with dynamic parameters
  */
 
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from './logger.js';
+import { getConnection } from './connection-pool.js';
 
 // Map to store active sessions
 const sessions = new Map();
@@ -19,22 +21,18 @@ export const SESSION_STATES = {
 };
 
 class SSHSession {
-  constructor(id, serverName, ssh) {
+  constructor(id, host, user, port, sshManager) {
     this.id = id;
-    this.serverName = serverName;
-    this.ssh = ssh;
+    this.host = host;
+    this.user = user;
+    this.port = port;
+    this.sshManager = sshManager;
     this.state = SESSION_STATES.INITIALIZING;
-    this.context = {
-      cwd: null,
-      env: {},
-      history: [],
-      variables: {}
-    };
+    this.cwd = null;
     this.createdAt = new Date();
     this.lastActivity = new Date();
     this.shell = null;
     this.outputBuffer = '';
-    this.errorBuffer = '';
   }
 
   /**
@@ -43,17 +41,16 @@ class SSHSession {
   async initialize() {
     try {
       logger.info(`Initializing SSH session ${this.id}`, {
-        server: this.serverName
+        host: this.host,
+        user: this.user,
+        port: this.port
       });
 
-      // Start an interactive shell
-      this.shell = await this.ssh.requestShell({
+      this.shell = await this.sshManager.shell({
         term: 'xterm-256color',
         cols: 80,
         rows: 24
       });
-
-      // Setup event handlers
       this.shell.on('data', (data) => {
         this.outputBuffer += data.toString();
         this.lastActivity = new Date();
@@ -72,25 +69,25 @@ class SSHSession {
         this.cleanup();
       });
 
-      this.shell.stderr.on('data', (data) => {
-        this.errorBuffer += data.toString();
-        logger.warn(`Session ${this.id} stderr`, {
-          error: data.toString()
+      this.shell.on('error', (err) => {
+        logger.error(`Session ${this.id} shell error`, {
+          error: err.message
         });
+        this.state = SESSION_STATES.ERROR;
       });
 
-      // Wait for shell prompt
-      await this.waitForPrompt();
+      await this.waitForOutput(5000);
+      this.outputBuffer = '';
 
-      // Allow context queries through standard execute flow
       this.state = SESSION_STATES.READY;
 
       // Get initial working directory
-      await this.updateContext();
+      await this.updateWorkingDirectory();
 
       logger.info(`Session ${this.id} initialized`, {
-        server: this.serverName,
-        cwd: this.context.cwd
+        host: this.host,
+        user: this.user,
+        cwd: this.cwd
       });
 
     } catch (error) {
@@ -103,52 +100,63 @@ class SSHSession {
   }
 
   /**
-   * Wait for shell prompt
+   * Wait for output to stabilize (tmux-style: no new data for timeout period)
    */
-  async waitForPrompt(timeout = 5000) {
-    const startTime = Date.now();
+  async waitForOutput(noDataTimeout = process.env.NODE_ENV === 'test' ? 200 : 3000) {
+    const startBufferLength = this.outputBuffer.length;
+    let lastBufferLength = startBufferLength;
+    let lastChangeTime = Date.now();
 
-    while (Date.now() - startTime < timeout) {
-      // Check if we have a prompt (ends with $ or # typically)
-      if (this.outputBuffer.match(/[$#>]\s*$/)) {
-        return true;
+    while (true) {
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      const currentLength = this.outputBuffer.length;
+
+      if (currentLength !== lastBufferLength) {
+        lastBufferLength = currentLength;
+        lastChangeTime = Date.now();
+      } else {
+        const timeSinceLastChange = Date.now() - lastChangeTime;
+        if (timeSinceLastChange >= noDataTimeout) {
+          return;
+        }
       }
-
-      // Wait a bit
-      await new Promise(resolve => setTimeout(resolve, 100));
     }
-
-    throw new Error('Timeout waiting for shell prompt');
   }
 
   /**
-   * Update session context (pwd, env)
+   * Update working directory
    */
-  async updateContext() {
+  async updateWorkingDirectory() {
     try {
-      // Get current directory
-      const pwdResult = await this.execute('pwd', { silent: true });
-      if (pwdResult.success) {
-        this.context.cwd = pwdResult.output.trim();
+      const prevBuffer = this.outputBuffer;
+      this.shell.write('pwd\n');
+      await this.waitForOutput(3000);
+
+      const newOutput = this.outputBuffer.substring(prevBuffer.length);
+      const lines = newOutput.split('\n').map(l => l.trim()).filter(l => l && !l.match(/[$#>]\s*$/));
+      
+      for (const line of lines) {
+        if (line.startsWith('/') || line.match(/^[A-Z]:\\/)) {
+          this.cwd = line;
+          break;
+        }
       }
 
-      // Get environment variables (selective)
-      const envResult = await this.execute('echo $PATH:$USER:$HOME', { silent: true });
-      if (envResult.success) {
-        const [path, user, home] = envResult.output.trim().split(':');
-        this.context.env = { PATH: path, USER: user, HOME: home };
-      }
+      logger.debug(`Updated working directory for session ${this.id}`, {
+        cwd: this.cwd
+      });
     } catch (error) {
-      logger.warn(`Failed to update context for session ${this.id}`, {
+      logger.warn(`Failed to update working directory for session ${this.id}`, {
         error: error.message
       });
     }
   }
 
   /**
-   * Execute a command in the session
+   * Send a command to the session (tmux-style)
    */
-  async execute(command, options = {}) {
+  async sendCommand(command) {
     if (this.state !== SESSION_STATES.READY) {
       throw new Error(`Session ${this.id} is not ready (state: ${this.state})`);
     }
@@ -157,67 +165,47 @@ class SSHSession {
     this.lastActivity = new Date();
 
     try {
-      // Clear buffers
       this.outputBuffer = '';
-      this.errorBuffer = '';
 
-      // Add to history unless silent
-      if (!options.silent) {
-        this.context.history.push({
-          command,
-          timestamp: new Date(),
-          cwd: this.context.cwd
-        });
+      logger.info(`Session ${this.id} sending command`, {
+        command: command.substring(0, 100)
+      });
 
-        logger.info(`Session ${this.id} executing`, {
-          command: command.substring(0, 100),
-          server: this.serverName
-        });
-      }
-
-      // Send command
       this.shell.write(command + '\n');
+      await this.waitForOutput(3000);
 
-      // Wait for command to complete
-      await this.waitForPrompt(options.timeout || 30000);
-
-      // Parse output (remove command echo and prompt)
       let output = this.outputBuffer;
 
-      // Remove the command echo (first line)
       const lines = output.split('\n');
-      if (lines[0].includes(command)) {
+      if (lines.length > 0 && lines[0].includes(command.substring(0, 50))) {
         lines.shift();
       }
 
-      // Remove the prompt (last line)
-      const lastLine = lines[lines.length - 1];
-      if (lastLine.match(/[$#>]\s*$/)) {
-        lines.pop();
+      while (lines.length > 0) {
+        const lastLine = lines[lines.length - 1].trim();
+        if (lastLine.match(/[$#>]\s*$/) || lastLine === '') {
+          lines.pop();
+        } else {
+          break;
+        }
       }
 
       output = lines.join('\n').trim();
 
-      // Check for command success (basic heuristic)
-      const success = !this.errorBuffer && !output.includes('command not found');
-
-      // Update context if command might have changed it
-      if (command.startsWith('cd ') || command.startsWith('export ')) {
-        await this.updateContext();
+      if (command.startsWith('cd ') || command.includes('cd ')) {
+        await this.updateWorkingDirectory();
       }
 
       this.state = SESSION_STATES.READY;
 
       return {
-        success,
         output,
-        error: this.errorBuffer,
-        session: this.id
+        sessionId: this.id
       };
 
     } catch (error) {
       this.state = SESSION_STATES.ERROR;
-      logger.error(`Session ${this.id} execution failed`, {
+      logger.error(`Session ${this.id} command failed`, {
         command,
         error: error.message
       });
@@ -226,34 +214,18 @@ class SSHSession {
   }
 
   /**
-   * Set session variable
-   */
-  setVariable(name, value) {
-    this.context.variables[name] = value;
-    this.lastActivity = new Date();
-  }
-
-  /**
-   * Get session variable
-   */
-  getVariable(name) {
-    return this.context.variables[name];
-  }
-
-  /**
    * Get session info
    */
   getInfo() {
     return {
       id: this.id,
-      server: this.serverName,
+      host: this.host,
+      user: this.user,
+      port: this.port,
       state: this.state,
-      cwd: this.context.cwd,
-      env: this.context.env,
-      created: this.createdAt,
-      lastActivity: this.lastActivity,
-      historyCount: this.context.history.length,
-      variables: Object.keys(this.context.variables)
+      cwd: this.cwd,
+      started: this.createdAt,
+      lastActivity: this.lastActivity
     };
   }
 
@@ -264,8 +236,14 @@ class SSHSession {
     logger.info(`Closing session ${this.id}`);
 
     if (this.shell) {
-      this.shell.write('exit\n');
-      this.shell.end();
+      try {
+        this.shell.write('exit\n');
+        this.shell.end();
+      } catch (err) {
+        logger.warn(`Error during shell close for session ${this.id}`, {
+          error: err.message
+        });
+      }
       this.shell = null;
     }
 
@@ -279,18 +257,18 @@ class SSHSession {
   cleanup() {
     sessions.delete(this.id);
     this.outputBuffer = '';
-    this.errorBuffer = '';
-    this.context.history = [];
   }
 }
 
 /**
- * Create a new SSH session
+ * Start a new SSH session with dynamic parameters
  */
-export async function createSession(serverName, ssh) {
+export async function startSession(host, user, port = 22) {
   const sessionId = `ssh_${Date.now()}_${uuidv4().substring(0, 8)}`;
 
-  const session = new SSHSession(sessionId, serverName, ssh);
+  const sshManager = await getConnection(host, user, port);
+
+  const session = new SSHSession(sessionId, host, user, port, sshManager);
   sessions.set(sessionId, session);
 
   try {
@@ -298,7 +276,9 @@ export async function createSession(serverName, ssh) {
 
     logger.info('SSH session created', {
       id: sessionId,
-      server: serverName
+      host,
+      user,
+      port
     });
 
     return session;
@@ -309,9 +289,9 @@ export async function createSession(serverName, ssh) {
 }
 
 /**
- * Get an existing session
+ * Send a command to an existing session
  */
-export function getSession(sessionId) {
+export async function sendCommand(sessionId, command) {
   const session = sessions.get(sessionId);
 
   if (!session) {
@@ -322,7 +302,7 @@ export function getSession(sessionId) {
     throw new Error(`Session ${sessionId} is closed`);
   }
 
-  return session;
+  return await session.sendCommand(command);
 }
 
 /**
@@ -352,22 +332,6 @@ export function closeSession(sessionId) {
 
   session.close();
   return true;
-}
-
-/**
- * Close all sessions for a server
- */
-export function closeServerSessions(serverName) {
-  let closedCount = 0;
-
-  for (const [id, session] of sessions.entries()) {
-    if (session.serverName === serverName) {
-      session.close();
-      closedCount++;
-    }
-  }
-
-  return closedCount;
 }
 
 /**
@@ -401,11 +365,10 @@ setInterval(() => {
 }, 5 * 60 * 1000); // Every 5 minutes
 
 export default {
-  createSession,
-  getSession,
+  startSession,
+  sendCommand,
   listSessions,
   closeSession,
-  closeServerSessions,
   cleanupSessions,
   SESSION_STATES
 };
